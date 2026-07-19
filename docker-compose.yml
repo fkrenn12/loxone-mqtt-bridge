@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: ./src
+      dockerfile: ${DOCKERFILE}
+    container_name: loxone-mqtt-bridge
+    restart: always
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    environment:
+      - API_PORT=${API_PORT}
+      - UDP_PORT=${UDP_PORT}
+    ports:
+      - "${UDP_PORT}:${UDP_PORT}"
+      - "${API_PORT}:${API_PORT}"
+    volumes:
+      - ./.loxone-mqtt-bridge/config:/usr/src/config
+      - ./src:/usr/src/app:volume-nocopy
+      - /etc/localtime:/etc/localtime
+    networks:
+      - backnet
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /usr/src/app
+        uvicorn main:app ${RELOAD} --workers 1 --host "0.0.0.0" --port ${API_PORT} --proxy-headers
+networks:
+  backnet:
+
+
