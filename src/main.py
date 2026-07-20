@@ -19,17 +19,14 @@ import sys
 import subprocess
 import os
 from constants import *
+from utils import *
 from logger import logger
 from init_config import write_init_config_devices, write_init_config_mqtt, write_init_config_loxone
+
 UDP_PORT = filename = os.environ.get('UDP_PORT', None)
 UDP_PORT = int(UDP_PORT) if UDP_PORT else UDP_DEFAULT_PORT
 API_PORT = filename = os.environ.get('API_PORT', None)
 API_PORT = int(API_PORT) if API_PORT else API_DEFAULT_PORT
-
-
-def is_running_in_container():
-    return Path('/run/.dockerenv').is_file() or Path('/.dockerenv').is_file()
-
 
 if is_running_in_container():
     logger.info("Running in docker container")
@@ -42,23 +39,6 @@ MQTT_CONFIG_FILE_PATH = Path(f"{CONFIG_PATH}/mqtt.json")
 MODELS_CONFIG_FILE_PATH = Path(f"{CONFIG_PATH}/models.json")
 DEVICES_CONFIG_FILE_PATH = Path(f"{CONFIG_PATH}/devices.json")
 LOXONE_CONFIG_FILE_PATH = Path(f"{CONFIG_PATH}/loxone.json")
-
-
-def load_json_file(file_path: Path):
-    with file_path.open('r', encoding="utf-8") as file:
-        try:
-            return json.loads(file.read())
-        except json.decoder.JSONDecodeError:
-            return dict()
-
-
-def save_json_file(file_path: Path, json_dict: dict):
-    with open(file_path, "w", encoding="utf-8") as f:
-        try:
-            json.dump(json_dict, fp=f, indent=4)
-        except json.JSONDecodeError:
-            return False
-
 
 try:
     config = load_json_file(MQTT_CONFIG_FILE_PATH)
@@ -408,6 +388,40 @@ async def get_models():
 async def update_models(new_config: dict):
     try:
         save_json_file(MODELS_CONFIG_FILE_PATH, new_config)
+        return {"success": True, "message": "Successfully updated the configuration!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving the configuration: {str(e)}")
+
+
+@app.get("/api/devices")
+async def get_devices():
+    try:
+        return load_json_file(DEVICES_CONFIG_FILE_PATH)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading the configuration: {str(e)}")
+
+
+@app.post("/api/devices")
+async def update_devices(new_config: dict):
+    try:
+        save_json_file(DEVICES_CONFIG_FILE_PATH, new_config)
+        return {"success": True, "message": "Successfully updated the configuration!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving the configuration: {str(e)}")
+
+
+@app.get("/api/loxone-config")
+async def get_loxone_config():
+    try:
+        return load_json_file(LOXONE_CONFIG_FILE_PATH)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading the configuration: {str(e)}")
+
+
+@app.post("/api/loxone-config")
+async def update_loxone_config(new_config: dict):
+    try:
+        save_json_file(LOXONE_CONFIG_FILE_PATH, new_config)
         return {"success": True, "message": "Successfully updated the configuration!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving the configuration: {str(e)}")
