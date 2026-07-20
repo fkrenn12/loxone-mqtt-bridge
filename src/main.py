@@ -119,9 +119,7 @@ async def _lifespan(_app: FastAPI):
 app = FastAPI(lifespan=_lifespan,
               title="Loxone MQTT Bridge",
               version="1.0.0",
-              contact={"name": "Franz Krenn",
-                       "email": "office@fkrenn.at"},
-              summary="Handling Loxone UDP messages and bridging with MQTT.",
+              summary="Handle and bridging Loxone UDP messages to MQTT.",
               description=description)
 
 app.add_middleware(
