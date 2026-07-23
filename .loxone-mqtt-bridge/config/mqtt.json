@@ -1,8 +1,0 @@
-{
-    "HOST": "mosquitto",
-    "PORT": 1883,
-    "USERNAME": "",
-    "PASSWORD": "",
-    "SSL": "0",
-    "LAST_CONNECTION_TIME": ""
-}
