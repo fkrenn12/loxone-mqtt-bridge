@@ -187,7 +187,6 @@
             "description": "RGB light",
             "vendor": "EGLO",
             "exposes": [
-                "on",
                 "state",
                 "brightness",
                 "color_temp",
@@ -197,12 +196,14 @@
                 "effect",
                 "power_on_behaviour"
             ],
-            "default_expose": "on",
+            "default_expose": "state",
             "convert_bool2int": 1,
             "value_mappings": {
-                "on": {
-                    "0": false,
-                    "1": true
+                "state": {
+                    "on": 1,
+                    "off": 0,
+                    "1": "ON",
+                    "0": "OFF"
                 }
             },
             "default_value": 0,
