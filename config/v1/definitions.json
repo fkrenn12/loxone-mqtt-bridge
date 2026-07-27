@@ -1,5 +1,5 @@
 {
-    "models": [
+    "definitions": [
         {
             "name": "TS0044_2",
             "mqtt_topic": "zigbee2mqtt",
