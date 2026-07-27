@@ -181,6 +181,35 @@
                 "{topic}/{value}"
             ],
             "specific_message_formats": {}
+        },
+        {
+            "name": "900024/12253",
+            "description": "RGB light",
+            "vendor": "EGLO",
+            "exposes": [
+                "on",
+                "state",
+                "brightness",
+                "color_temp",
+                "color_temp_startup",
+                "color_xy",
+                "color_hs",
+                "effect",
+                "power_on_behaviour"
+            ],
+            "default_expose": "on",
+            "convert_bool2int": 1,
+            "value_mappings": {
+                "on": {
+                    "0": false,
+                    "1": true
+                }
+            },
+            "default_value": 0,
+            "default_message_format": [
+                "{topic}/{value}"
+            ],
+            "specific_message_formats": {}
         }
     ]
 }
