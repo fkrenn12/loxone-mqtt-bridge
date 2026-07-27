@@ -2,7 +2,6 @@
     "definitions": [
         {
             "name": "TS0044_2",
-            "mqtt_topic": "zigbee2mqtt",
             "description": "Wireless switch with 4 buttons",
             "vendor": "Tuya",
             "exposes": [
@@ -41,7 +40,6 @@
         },
         {
             "name": "ZG-102ZA",
-            "mqtt_topic": "zigbee2mqtt",
             "description": "Door/window sensor",
             "vendor": "HOBEIAN",
             "exposes": [
@@ -88,7 +86,6 @@
         },
         {
             "name": "TS0601_soil_3",
-            "mqtt_topic": "zigbee2mqtt",
             "description": "Soil sensor",
             "vendor": "Tuya",
             "exposes": [
@@ -109,7 +106,6 @@
         },
         {
             "name": "ZG-204ZH",
-            "mqtt_topic": "zigbee2mqtt",
             "description": "PIR 24Ghz human presence sensor",
             "vendor": "HOBEIAN",
             "exposes": [
@@ -136,7 +132,6 @@
         },
         {
             "name": "E22x4",
-            "mqtt_topic": "hue2mqtt",
             "description": "TRETAKT smart plug",
             "vendor": "IKEA",
             "exposes": [
@@ -161,7 +156,6 @@
         },
         {
             "name": "HueWhite1600",
-            "mqtt_topic": "hue2mqtt",
             "description": "Lamp 1600 lumen",
             "vendor": "Philips",
             "exposes": [
