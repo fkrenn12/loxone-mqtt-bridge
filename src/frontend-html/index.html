@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loxone Mqtt Bridge Configuration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .menu {
+      /* Setzt Flexbox-LAYOUT für Menüs */
+      display: flex;
+      justify-content: space-between; /* Links-Rechts trennen */
+      align-items: center; /* Vertikale Zentrierung */
+      margin-bottom: 20px;
+    }
+
+    .left-menu {
+      /* Innerhalb "menu" linksbündig */
+      display: flex;
+      gap: 10px; /* Abstände zwischen Buttons */
+    }
+
+    .right-menu {
+      /* Innerhalb "menu" rechtsbündig */
+      display: flex;
+      align-items: center; /* Vertikale Zentrierung */
+    }
+
+    .menu button {
+      /* Standard-Button-Styling */
+      margin-right: 10px;
+      padding: 10px 15px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    .menu button.restart-btn {
+      /* Restart-Button spezifisches Design */
+      background-color: #28a745;
+      margin-right: 0; /* Kein zusätzlicher Abstand */
+    }
+
+    .menu button.restart-btn:hover {
+      background-color: #218838; /* Hover-Farbänderung */
+    }
+    .container {
+      display: none;
+    }
+    .container.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    input, select, button {
+      padding: 5px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    table, td, th {
+      border: 1px solid #ddd;
+    }
+    table th, table td {
+      padding: 8px;
+      text-align: left;
+    }
+    .edit-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 5px 10px;
+      margin-right: 5px;
+    }
+
+    .delete-btn {
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Loxone Mqtt Bridge - Configuration</h1>
+  <div class="menu">
+  <div class="left-menu">
+    <button id="menu-devices" class="active">Devices</button>
+    <button id="menu-loxone">Loxone</button>
+    <button id="menu-mqtt">MQTT</button>
+    <button id="menu-definitions">Models</button>
+  </div>
+  <div class="right-menu">
+    <button class="restart-btn">Restart</button>
+  </div>
+</div>
+
+  <!-- Devices Section -->
+  <div id="devices-container" class="container active">
+    <h2>HUE Devices</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Friendly name</th>
+          <th>Modell name</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody id="devices-table"></tbody>
+    </table>
+    <form id="device-form">
+      <div class="form-group">
+        <label for="device-key">Device Key:</label>
+        <input type="text" id="device-key" required>
+      </div>
+      <div class="form-group">
+        <label for="device-value">Device Value:</label>
+        <input type="text" id="device-value" required>
+      </div>
+      <button type="submit">Hinzufügen / Bearbeiten</button>
+    </form>
+    <div class="form-group">
+      <label for="upload-file-devices">Datei hochladen:</label>
+      <input type="file" id="upload-file-devices">
+      <button class="upload-btn" data-category="devices">Hochladen</button>
+    </div>
+  </div>
+
+  <!-- Loxone Section -->
+  <div id="loxone-container" class="container">
+    <h2>Loxone</h2>
+    <form id="loxone-form">
+      <div class="form-group">
+        <label for="loxone-ip">IP-Adresse:</label>
+        <input type="text" id="loxone-ip" required>
+      </div>
+      <div class="form-group">
+        <label for="loxone-port">UDP-Port:</label>
+        <input type="number" id="loxone-port" required>
+      </div>
+      <button type="submit">Speichern</button>
+    </form>
+  </div>
+
+  <!-- MQTT Section -->
+  <div id="mqtt-container" class="container">
+    <h2>MQTT</h2>
+    <form id="mqtt-form">
+      <div class="form-group">
+        <label for="mqtt-host">Host:</label>
+        <input type="text" id="mqtt-host" required>
+      </div>
+      <div class="form-group">
+        <label for="mqtt-port">Port:</label>
+        <input type="number" id="mqtt-port" required>
+      </div>
+      <div class="form-group">
+        <label for="mqtt-username">Username:</label>
+        <input type="text" id="mqtt-username">
+      </div>
+      <div class="form-group">
+        <label for="mqtt-password">Password:</label>
+        <input type="text" id="mqtt-password">
+      </div>
+      <div class="form-group">
+        <label for="mqtt-ssl">SSL:</label>
+        <select id="mqtt-ssl">
+          <option value="0">Disabled</option>
+          <option value="1">Enabled</option>
+        </select>
+      </div>
+      <button type="submit">Speichern</button>
+      </form>
+      <p id="mqtt-test-result"></p>
+    </form>
+  </div>
+
+  <!-- Models Section -->
+  <div id="definitions-container" class="container">
+    <h2>Models</h2>
+    <form id="model-form">
+      <div class="form-group">
+        <label for="model-name">Model Name:</label>
+        <input type="text" id="model-name" required>
+      </div>
+      <div class="form-group">
+        <label for="model-description">Description:</label>
+        <input type="text" id="model-description">
+      </div>
+      <button type="submit">Hinzufügen</button>
+    </form>
+    <div class="form-group">
+      <label for="upload-file-definitions">Datei hochladen:</label>
+      <input type="file" id="upload-file-definitions">
+      <button class="upload-btn" data-category="definitions">Hochladen</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://127.0.0.1:5602/api";
+
+    // Grobe API-Endpunkte
+    const endpoints = {
+      definitions: {
+        get: `${API_BASE_URL}/definitions`,
+        post: `${API_BASE_URL}/definitions`,
+      },
+      devices: {
+        get: `${API_BASE_URL}/devices`,
+        post: `${API_BASE_URL}/devices`,
+      },
+      loxone: {
+        get: `${API_BASE_URL}/loxone`,
+        post: `${API_BASE_URL}/loxone`,
+      },
+      mqtt: {
+        get: `${API_BASE_URL}/mqtt`,
+        post: `${API_BASE_URL}/mqtt`,
+      },
+    };
+
+    const menuButtons = document.querySelectorAll(".menu button");
+    const containers = document.querySelectorAll(".container");
+
+    function objectToDeviceArray(devicesObj) {
+      return Object.entries(devicesObj).map(([key, value]) => ({
+        key,
+        value,
+      }));
+    }
+    function editDevice(device) {
+      // Setze die Werte des zu bearbeitenden Geräts in das Formular
+      document.getElementById("device-key").value = device.key;
+      document.getElementById("device-value").value = device.value;
+
+      // Ändere den Submit-Button-Text, um den Bearbeitungsmodus anzuzeigen
+      const submitButton = document.querySelector("#device-form button[type='submit']");
+      submitButton.textContent = "Bearbeiten"; // Anzeige ändern, um den Benutzer zu informieren
+
+      // Optional: Markiere das Formular visuell für Bearbeitung
+      submitButton.style.backgroundColor = "#ffc107"; // Gelb für Bearbeitungsmodus
+      submitButton.style.color = "#000"; // Schwarzer Text für Kontrast
+
+      console.log(`Bearbeitungsmodus für das Gerät mit key="${device.key}" aktiviert.`);
+    }
+    // Löschen eines Geräts
+    async function deleteDevice(key) {
+      if (!confirm(`Möchtest du das Device mit dem Key "${key}" wirklich löschen?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetchData(`${endpoints.devices.post}/${key}`, "DELETE");
+        if (response) {
+          alert("Device erfolgreich gelöscht!");
+          await loadDevices(); // Tabelle aktualisieren
+        } else {
+          alert("Fehler beim Löschen des Devices.");
+        }
+      } catch (error) {
+        console.error("Fehler beim Löschen des Devices:", error);
+        alert("Fehler beim Löschen des Devices.");
+      }
+    }
+
+    document.querySelector(".restart-btn").addEventListener("click", async () => {
+      const endpoint = `${API_BASE_URL}/restart`; // Passe deinen API-Endpunkt an
+      const response = await fetch(endpoint, { method: "GET" });
+    });
+
+    // Hinzufügen oder Bearbeiten eines Devices
+    document.getElementById("device-form").addEventListener("submit", async (event) => {
+      event.preventDefault(); // Standard-Formularaktion verhindern
+
+      const key = document.getElementById("device-key").value.trim();
+      const value = document.getElementById("device-value").value.trim();
+
+      if (!key || !value) {
+        alert("Bitte alle Felder ausfüllen!");
+        return;
+      }
+
+      const payload = { [key]: value };
+
+      try {
+        // Prüfen, ob das Device bereits existiert (lokal)
+        const existingRow = [...document.querySelectorAll("#devices-table tr")].find(
+          (row) => row.children[0].textContent === key
+        );
+
+        // Wenn das Gerät existiert → PUT (Bearbeiten), sonst POST (Hinzufügen)
+        const method = existingRow ? "PUT" : "POST";
+        const endpoint = method === "PUT"
+                                ? `${API_BASE_URL}/devices/${key}` // Dynamische URL für PUT
+                                : endpoints.devices.post;          // Standard-POST-URL
+
+        const response = await fetchData(endpoint, method, payload);
+
+        if (response) {
+          alert(`Device erfolgreich ${method === "POST" ? "hinzugefügt" : "bearbeitet"}!`);
+          document.getElementById("device-form").reset(); // Formular zurücksetzen
+          await loadDevices(); // Devices-Tabelle neu laden
+        } else {
+          alert(`Fehler beim ${method === "POST" ? "Hinzufügen" : "Bearbeiten"} des Devices.`);
+        }
+      } catch (error) {
+        console.error("Fehler beim Speichern:", error);
+        alert("Fehler beim Speichern der Devices-Daten.");
+      }
+    });
+    // Event-Händler für das MQTT-Formular
+    document.getElementById("mqtt-form").addEventListener("submit", async (event) => {
+      // Verhindere das automatische Neuladen der Seite
+      event.preventDefault();
+
+      // Werte aus den Eingabefeldern auslesen
+      const host = document.getElementById("mqtt-host").value;
+      const port = document.getElementById("mqtt-port").value;
+      const username = document.getElementById("mqtt-username").value;
+      const password = document.getElementById("mqtt-password").value; // Wenn leer, bleibt es leer
+      const ssl = document.getElementById("mqtt-ssl").value;
+
+      // JSON-Objekt erstellen
+      const payload = {
+        host,
+        port: Number(port), // Sicherstellen, dass es eine Zahl ist
+        username,
+        password, // Falls nicht gesetzt, bleibt das leer
+        ssl: ssl === "1" // SSL-Status in Boolean umwandeln
+      };
+
+      try {
+        // API-Post-Anfrage senden
+        const response = await fetchData(endpoints.mqtt.post, "POST", payload);
+      } catch (error) {
+        console.error("Fehler beim Speichern:", error);
+        alert("Fehler beim Speichern der MQTT-Daten.");
+      }
+      const resultElement = document.getElementById("mqtt-test-result");
+
+      // Test läuft Nachricht
+      resultElement.innerText = "MQTT Verbindung herstellen...";
+
+      try {
+        // Fetch-Aufruf zur Test-Route
+        const response = await fetch(`${API_BASE_URL}/mqtt-restart`);
+        const result = await response.json();
+
+        // Erfolgs- oder Fehlermeldung anzeigen
+        if (result.connected) {
+          resultElement.innerText = "✅ Verbindung erfolgreich!";
+        } else {
+          resultElement.innerText = `❌ Verbindung fehlgeschlagen: ${result.reason || "Unbekannter Fehler"}`;
+        }
+      } catch (error) {
+        // Fehler während des Tests
+        resultElement.innerText = `❌ Fehler beim Verbindungs-Test: ${error.message}`;
+      }
+    });
+
+
+    // Event-Händler für das Loxone-Formular
+    document.getElementById("loxone-form").addEventListener("submit", async (event) => {
+      // Verhindere das automatische Neuladen der Seite
+      event.preventDefault();
+
+      // Werte aus den Eingabefeldern auslesen
+      const ipAddress = document.getElementById("loxone-ip").value;
+      const udpPort = document.getElementById("loxone-port").value;
+
+      // JSON-Objekt erstellen
+      const payload = {
+        "ip_address": ipAddress,
+        "udp_port": Number(udpPort), // Port sollte eine Zahl sein
+      };
+
+  try {
+    // API-Post-Anfrage senden
+    const response = await fetchData(endpoints.loxone.post, "POST", payload);
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    alert("Fehler beim Speichern der Loxone-Daten.");
+  }
+
+});
+
+    function renderLoxone(data) {
+      // Input-Felder für IP-Adresse und UDP-Port
+      const ipInput = document.getElementById("loxone-ip");
+      const portInput = document.getElementById("loxone-port");
+
+      // Werte aus den Daten einfügen (falls vorhanden)
+      if (data) {
+        ipInput.value = data["ip_address"] || ""; // Standardwert ist ein leerer String
+        portInput.value = data["udp_port"] || ""; // Standardwert ist ein leerer String
+      }
+    }
+
+    function renderMQTT(data) {
+      // Input-Felder für Host, Port, Username und SSL
+      const hostInput = document.getElementById("mqtt-host");
+      const portInput = document.getElementById("mqtt-port");
+      const usernameInput = document.getElementById("mqtt-username");
+      const passwordInput = document.getElementById("mqtt-password"); // Wird leer gelassen
+      const sslSelect = document.getElementById("mqtt-ssl");
+
+      // Werte aus den Daten einfügen (falls vorhanden)
+      if (data) {
+        hostInput.value = data["host"] || ""; // Standardwert ist ein leerer String
+        portInput.value = data["port"] || ""; // Falls Port nicht gesetzt, leer lassen
+        usernameInput.value = data["username"] || "";
+        sslSelect.value = data.ssl ? "1" : "0"; // Entspricht der Dropdown-Option
+        // sslSelect.value = data["ssl"] || "0"; // Standard ist "Disabled"
+
+        // Password wird **nicht** übernommen
+        passwordInput.value = "";
+      }
+    }
+
+  // Funktion zum Rendern der Devices in die Tabelle
+  function renderDevices(devices) {
+    const devicesTableBody = document.getElementById("devices-table"); // Tabellen-Container
+    devicesTableBody.innerHTML = ""; // Tabelle leeren
+
+      devices.forEach((device) => {
+        const row = document.createElement("tr");
+
+        // Key-Spalte
+        const keyCell = document.createElement("td");
+        keyCell.textContent = device.key;
+        row.appendChild(keyCell);
+
+        // Value-Spalte
+        const valueCell = document.createElement("td");
+        valueCell.textContent = device.value;
+        row.appendChild(valueCell);
+
+        // Aktion-Spalte: Bearbeiten & Löschen
+        const actionsCell = document.createElement("td");
+
+        // Bearbeiten-Button
+        const editButton = document.createElement("button");
+        editButton.textContent = "Bearbeiten";
+        editButton.classList.add("edit-btn");
+        editButton.addEventListener("click", () => editDevice(device));
+        actionsCell.appendChild(editButton);
+
+        // Löschen-Button
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Löschen";
+        deleteButton.classList.add("delete-btn");
+        deleteButton.addEventListener("click", () => deleteDevice(device.key));
+        actionsCell.appendChild(deleteButton);
+
+        row.appendChild(actionsCell);
+
+        // Zeile zur Tabelle hinzufügen
+        devicesTableBody.appendChild(row);
+      });
+    }
+    // Devices laden und in Tabelle anzeigen
+    async function loadDevices() {
+      try {
+        const devices = await fetchData(endpoints.devices.get, "GET");
+        const devicesArray = objectToDeviceArray(devices || {});
+        renderDevices(devicesArray ); // Falls keine Daten vorhanden sind, wird ein leerer Array gerendert
+      } catch (error) {
+        console.error("Fehler beim Laden der Devices:", error);
+        alert("Fehler beim Laden der Devices.");
+      }
+    }
+    async function loadConfig(category) {
+      const url = endpoints[category]?.get;
+      console.log("%cloadConfig aufgerufen", "color: green; font-size: 16px; font-weight: bold;");
+      // console.log(category)// Grün, fett, groß
+      if (!url) return;
+      try {
+        const data = await fetchData(url);
+        console.log(category, data);
+
+        // Spezifisch für Loxone: Fülle das Formular bei Klick
+        if (category === "loxone") {
+          renderLoxone(data || []);
+        }
+        // Spezifisch für MQTT: Fülle das Formular bei Klick
+        if (category === "mqtt") {
+          renderMQTT(data || []);
+        }
+        if (category === "devices") {
+          const devicesArray = objectToDeviceArray(data || {});
+          renderDevices(devicesArray);
+        }
+      } catch (error) {
+        console.error(`Fehler beim Laden der ${category}-Konfiguration:`, error);
+      }
+    }
+
+    menuButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        menuButtons.forEach((btn) => btn.classList.remove("active"));
+        containers.forEach((container) => container.classList.remove("active"));
+
+        button.classList.add("active");
+        const id = button.id.replace("menu-", "");
+        document.getElementById(`${id}-container`).classList.add("active");
+
+        // Konfiguration für die ausgewählte Kategorie laden
+        loadConfig(id);
+      });
+    });
+
+    // Allgemeiner Fetch-Handler
+    async function fetchData(url, method = "GET", payload = null) {
+      try {
+        const options = {
+          method,
+          headers: { "Content-Type": "application/json" },
+        };
+        if (payload) {
+          options.body = JSON.stringify(payload);
+        }
+        const response = await fetch(url, options);
+        return response.ok ? await response.json() : Promise.reject(response.statusText);
+      } catch (error) {
+        console.error("Fehler beim Abrufen der Daten:", error);
+      }
+    }
+
+    // Datei-Upload
+    document.querySelectorAll(".upload-btn").forEach((button) => {
+      button.addEventListener("click", async (e) => {
+        const category = e.target.getAttribute("data-category");
+        const fileInput = document.querySelector(`#upload-file-${category}`);
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("Bitte eine Datei auswählen!");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          if (response.ok) {
+            alert(`Datei erfolgreich für ${category} hochgeladen!`);
+            loadConfig(category);
+          } else {
+            alert("Fehler beim Hochladen der Datei.");
+          }
+        } catch (error) {
+          console.error("Upload fehlgeschlagen:", error);
+          alert("Fehler beim Hochladen.");
+        }
+      });
+    });
+
+    // Initiale Lade-Konfiguration
+    ["definitions", "devices", "loxone", "mqtt"].forEach((category) => {
+      loadConfig(category);
+    });
+  </script>
+</body>
+</html>
