@@ -22,7 +22,7 @@ def udp2mqtt(msg: str):
         logger.error(f"Invalid message format:{msg}")
         return
     try:
-        device = config.devices.get(device_name, {})
+        device = config.devices.get(device_name)
         topic = device.get("topic", "")
     except:
         logger.error(f"No device {device_name} found.")
