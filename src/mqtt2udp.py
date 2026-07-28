@@ -6,8 +6,8 @@ from logger import logger
 def mqtt2udp(topic: str, payload: dict):
     send = []
     device_name = topic.split("/")[-1]
-    device = config.devices.get(device_name)
     try:
+        device = config.devices.get(device_name)
         model_name = device["model_name"]
         model = next((m for m in config.definitions["definitions"] if m["name"] == model_name), None)
         exposes = model["exposes"]
