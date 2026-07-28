@@ -1,5 +1,19 @@
 import asyncio
 from logger import logger
+from constants import *
+import socket
+from config import config, UDP_PORT
+
+
+def udp_send(data):
+    dest_ip = config.loxone.get(KEY_IP_ADDRESS)
+    dest_port = config.loxone.get(KEY_UDP_PORT, UDP_PORT)
+    logger.info(f"Sending UDP: {data} to {dest_ip}:{dest_port}")
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    if type(data) is not bytes:
+        data = data.encode(encoding="utf-8")
+    s.sendto(data, (config.loxone.get(KEY_IP_ADDRESS), config.loxone.get(KEY_UDP_PORT, UDP_PORT)))
+    s.close()
 
 
 class UDPServerProtocol(asyncio.DatagramProtocol):

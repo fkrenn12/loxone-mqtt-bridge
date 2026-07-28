@@ -1,5 +1,5 @@
-FROM python:3.13-trixie
-
+# FROM python:3.13-trixie
+FROM python:3.13-slim
 WORKDIR /usr/src/app
 
 COPY ./requirements.txt /usr/src/app/requirements.txt
