@@ -11,6 +11,11 @@ services:
       - API_PORT=${API_PORT:-5602}
       - UDP_PORT=${UDP_PORT:-4444}
       - LOXONE_IP=${LOXONE_IP:-}
+      - MQTT_HOST=${MQTT_HOST:-}
+      - MQTT_PORT=${MQTT_PORT:-}
+      - MQTT_USER=${MQTT_USER:-}
+      - MQTT_PASS=${MQTT_PASS:-}
+      - MQTT_SSL=${MQTT_SSL:-}
       - TZ=${TZ:-UTC}
     ports:
       - ${API_PORT:-5602}:${API_PORT:-5602}
@@ -18,7 +23,8 @@ services:
     volumes:
       - ${SRC_MOUNT:-loxone_config:/usr/src/config} # mounting twice is ok
       - loxone_config:/usr/src/config
-    # gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:5602 main:app
+    # server alternative in production environment
+    # gunicorn -w 1 --preload -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${API_PORT:-5602} main:app
     command:
       - /bin/sh
       - -c
