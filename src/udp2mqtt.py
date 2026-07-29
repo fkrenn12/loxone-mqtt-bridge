@@ -51,9 +51,15 @@ def udp2mqtt(msg: str):
         value = {"true": True, "false": False}.get(value.lower(), value)
 
     try:
-        payload = json.dumps({key: value})
-    except JSONDecodeError:
-        logger.error(f"Invalid JSON: {key}:{value}")
+        value = json.loads(value)
+    except JSONDecodeError as e:
+        pass
+
+    try:
+        payload = {key: value}
+        json.dumps(payload)  # Verify if payload is serializable to JSON
+    except (TypeError, JSONDecodeError) as e:
+        logger.error(f"Invalid JSON data: {key}:{value} - {e}")
         return
 
     if topic:
