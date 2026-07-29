@@ -40,13 +40,11 @@ def udp2mqtt(msg: str):
             logger.error(f"Cannot process message - missing key: {msg}")
             return
 
-    value = to_int_or_float_if_possible(value)
+    value = cast_to_numeric(value)
 
     # convert true/True and false/False to boolean
     if isinstance(value, str):
-        v = value.lower()
-        v = True if v == "true" else False if v == "false" else value
-        value = v
+        value = {"true": True, "false": False}.get(value.lower(), value)
 
     try:
         payload = json.dumps({key: value})

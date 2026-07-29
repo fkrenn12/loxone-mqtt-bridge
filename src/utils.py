@@ -23,22 +23,13 @@ def save_json_file(file_path: Path, json_dict: dict):
             return False
 
 
-def to_int_or_float_if_possible(value):
-    try:
-        # If the value is a string, check if it can be converted to a number
-        if isinstance(value, str):
-            # Check if it can be converted to an integer
-            if value.isdigit():
-                return int(value)
-            # Check if it can be converted to a float
-            try:
-                return float(value)
-            except ValueError:
-                pass
-        # Return the original value if not convertible
-        return value
-    except Exception as e:
-        return value
+def cast_to_numeric(value):
+    if isinstance(value, str):
+        try:
+            return int(value) if value.isdigit() else float(value)
+        except ValueError:
+            pass
+    return value
 
 
 def apply_value_mapping(model: dict, key: str, value: Any):
