@@ -21,6 +21,10 @@ def udp2mqtt(msg: str):
     else:
         logger.error(f"Invalid message format:{msg}")
         return
+
+    if device_name == "ping":
+        return
+
     try:
         device = config.devices.get(device_name)
         topic = device.get("topic", "")
