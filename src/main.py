@@ -113,19 +113,19 @@ async def update_mqtt(new_config: dict):
 @app.get("/api/mqtt-restart")
 async def restart_mqtt():
     import asyncio
-    config.load_mqtt()
+    _mqtt = load_json_file(MQTT_CONFIG_FILE_PATH)
     try:
         await fast_mqtt.client.disconnect()
         await asyncio.sleep(1)
-        logger.debug(f'Try connecting to {config.mqtt.host}, {config.mqtt.port}, {config.mqtt.username}, {bool(config.mqtt.ssl)}...')
-        fast_mqtt.client.set_auth_credentials(config.mqtt.username, config.mqtt.password)
+        logger.debug(f'Try connecting to {_mqtt["host"]}, {_mqtt["port"]}, {_mqtt["username"]}, {bool(int(_mqtt["ssl"]))}...')
+        fast_mqtt.client.set_auth_credentials(_mqtt["username"], _mqtt["password"])
         # ssl context accepts selfsigned certificates
-        _ssl = config.mqtt.ssl
+        _ssl = bool(int(_mqtt["ssl"]))
         _ssl = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2 | ssl.CERT_NONE) if _ssl else False
-        await asyncio.wait_for(fast_mqtt.client.connect(host=config.mqtt.host, port=config.mqtt.port, ssl=_ssl), 2)
+        await asyncio.wait_for(fast_mqtt.client.connect(host=_mqtt["host"], port=_mqtt["port"], ssl=_ssl), 2)
         return models.Response(connected=True).model_dump(exclude={"reason"})
     except Exception as e:
-        return models.Response(connected=False, reason=str(e)).model_dump()
+        return models.Response(connected=False, reason=str(f"Cannot connect to {_mqtt["host"]}:{_mqtt["port"]}")).model_dump()
 
 
 @app.get("/api/mqtt-connection-state")
