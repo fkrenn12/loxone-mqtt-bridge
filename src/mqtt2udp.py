@@ -26,9 +26,12 @@ def mqtt2udp(topic: str, payload: dict):
         logger.info(f"No information found for device: {device_name}")
         for key in payload.keys():
             value = payload.get(key)
-            # convert true or false to 1 and 0
+            # convert true/false and on/off into 1 and 0
             if isinstance(value, bool):
-                value = 1 if value else 0
+                value = int(value)
+            elif isinstance(value, str) and value.lower() in ["on", "off"]:
+                value = 1 if value.lower() == "on" else 0
+
             send.append(f"{device_name}/{key}/{value}")
 
     return send
