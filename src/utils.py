@@ -32,6 +32,25 @@ def cast_to_numeric(value):
     return value
 
 
+def to_boolean(value):
+    """
+    Wandelt den Eingabewert zuverlässig in einen booleschen Wert um.
+    - Unterstützt: "True", "False", "0", "1", 0, 1, True, False.
+    - Unsichere Konvertierungen wie eval() werden umgangen.
+    """
+    true_values = {"true", "1", 1, True}
+    false_values = {"false", "0", 0, False}
+
+    if isinstance(value, str):
+        value = value.strip().lower()
+    if value in true_values:
+        return True
+    elif value in false_values:
+        return False
+    else:
+        raise ValueError(f"Invalid value: {value}")
+
+
 def apply_value_mapping(model: dict, key: str, value: Any):
     value = str(value).lower()
     mapping = model["value_mappings"].get(key)

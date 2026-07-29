@@ -117,7 +117,8 @@ async def restart_mqtt():
     try:
         await fast_mqtt.client.disconnect()
         await asyncio.sleep(1)
-        logger.debug(f'Try connecting to {_mqtt["host"]}, {_mqtt["port"]}, {_mqtt["username"]}, {bool(int(_mqtt["ssl"]))}...')
+        logger.debug(
+            f'Try connecting to {_mqtt["host"]}, {_mqtt["port"]}, {_mqtt["username"]}, {bool(int(_mqtt["ssl"]))}...')
         fast_mqtt.client.set_auth_credentials(_mqtt["username"], _mqtt["password"])
         # ssl context accepts selfsigned certificates
         _ssl = bool(int(_mqtt["ssl"]))
@@ -125,7 +126,8 @@ async def restart_mqtt():
         await asyncio.wait_for(fast_mqtt.client.connect(host=_mqtt["host"], port=_mqtt["port"], ssl=_ssl), 2)
         return models.Response(connected=True).model_dump(exclude={"reason"})
     except Exception as e:
-        return models.Response(connected=False, reason=str(f"Cannot connect to {_mqtt["host"]}:{_mqtt["port"]}")).model_dump()
+        return models.Response(connected=False,
+                               reason=str(f"Cannot connect to {_mqtt["host"]}:{_mqtt["port"]}")).model_dump()
 
 
 @app.get("/api/mqtt-connection-state")
@@ -141,6 +143,9 @@ async def serve_frontend():
     try:
         with open("frontend-html/index.html", "r", encoding="utf-8") as file:
             html_content = file.read()
+        print(HOST_IP)
+        if HOST_IP:
+            html_content = html_content.replace("127.0.0.1", HOST_IP)
         return HTMLResponse(content=html_content, status_code=200)
     except FileNotFoundError:
         return HTMLResponse(content="<h1>index.html not found</h1>", status_code=404)

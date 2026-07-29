@@ -9,12 +9,14 @@ import ssl
 
 UDP_PORT = int(os.environ.get('UDP_PORT', UDP_DEFAULT_PORT))
 API_PORT = int(os.environ.get('API_PORT', API_DEFAULT_PORT))
+HOST_IP = os.environ.get('HOST_IP', None)
 LOXONE_IP = os.environ.get('LOXONE_IP', None)
 MQTT_HOST = os.environ.get('MQTT_HOST', None)
 MQTT_PORT = os.environ.get('MQTT_PORT', None)
 MQTT_USER = os.environ.get('MQTT_USER', None)
 MQTT_PASS = os.environ.get('MQTT_PASS', None)
 MQTT_SSL = os.environ.get('MQTT_SSL', None)
+MQTT_SSL = to_boolean(MQTT_SSL) if MQTT_SSL else None
 
 print(">" * 100)
 print("Environment variables:")
@@ -28,6 +30,7 @@ print(f"MQTT_USER: {MQTT_USER}")
 print(f"MQTT_PASS: {MQTT_PASS}")
 print(f"MQTT_SSL: {MQTT_SSL}")
 print("<" * 100)
+
 CONFIG_PATH = Path("../config")
 MQTT_CONFIG_FILE_PATH = Path(f"{CONFIG_PATH}/mqtt.json")
 DEFINITIONS_CONFIG_FILE_PATH = Path(f"{CONFIG_PATH}/definitions.json")
@@ -53,7 +56,7 @@ class Config:
         _mqtt["port"] = MQTT_PORT if MQTT_PORT else _mqtt["port"]
         _mqtt["username"] = MQTT_USER if MQTT_USER else _mqtt["username"]
         _mqtt["password"] = MQTT_PASS if MQTT_PASS else _mqtt["password"]
-        _mqtt["ssl"] = MQTT_SSL if MQTT_SSL else _mqtt["ssl"]
+        _mqtt["ssl"] = MQTT_SSL if MQTT_SSL else to_boolean(_mqtt["ssl"])
         save_json_file(MQTT_CONFIG_FILE_PATH, _mqtt)
 
         self.mqtt.host = _mqtt.get("host")
@@ -64,8 +67,7 @@ class Config:
         self.mqtt.reconnect_delay = 10
         self.mqtt.reconnect_retries = 200000
         # allow self signed certificates
-        self.mqtt.ssl = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2 | ssl.CERT_NONE) if bool(
-            int(_mqtt.get("ssl", False))) else False
+        self.mqtt.ssl = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2 | ssl.CERT_NONE) if _mqtt.get("ssl", False) else False
 
     def load_loxone(self):
         try:
