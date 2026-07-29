@@ -52,7 +52,7 @@ def udp2mqtt(msg: str):
 
     try:
         value = json.loads(value)
-    except JSONDecodeError as e:
+    except:
         pass
 
     try:
