@@ -22,7 +22,7 @@ MQTT_USER = os.environ.get('MQTT_USER', None)
 MQTT_PASS = os.environ.get('MQTT_PASS', None)
 MQTT_SSL = to_boolean(os.environ.get('MQTT_SSL')) if os.environ.get('MQTT_SSL') else False
 DOWNLOAD_URL_DEFINITIONS = os.environ.get('DOWNLOAD_URL_DEFINITIONS') or DEFAULT_DOWNLOAD_URL_DEFINITIONS
-UPDATE_DEFINITIONS_INTERVAL_MINUTES = int(os.environ.get("UPDATE_DEFINITIONS_INTERVAL_MINUTES", "0") or 0)
+DEFINITIONS_UPDATE_INTERVAL_MIN = int(os.environ.get("DEFINITIONS_UPDATE_INTERVAL_MIN", "0") or 0)
 
 
 print(">" * 100)
@@ -163,5 +163,5 @@ class Config:
         self.load_definitions()
 
 
-config = Config(update_interval_minutes=UPDATE_DEFINITIONS_INTERVAL_MINUTES)
+config = Config(update_interval_minutes=DEFINITIONS_UPDATE_INTERVAL_MIN)
 config.load()
