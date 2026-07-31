@@ -96,46 +96,14 @@
   <h1>Loxone Mqtt Bridge - Configuration</h1>
   <div class="menu">
   <div class="left-menu">
-    <button id="menu-devices" class="active">Devices</button>
     <button id="menu-loxone">Loxone</button>
     <button id="menu-mqtt">MQTT</button>
-    <button id="menu-definitions">Models</button>
+    <button id="menu-definitions">Definitions</button>
   </div>
   <div class="right-menu">
     <button class="restart-btn">Restart</button>
   </div>
 </div>
-
-  <!-- Devices Section -->
-  <div id="devices-container" class="container active">
-    <h2>HUE Devices</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Friendly name</th>
-          <th>Modell name</th>
-          <th>Aktion</th>
-        </tr>
-      </thead>
-      <tbody id="devices-table"></tbody>
-    </table>
-    <form id="device-form">
-      <div class="form-group">
-        <label for="device-key">Device Key:</label>
-        <input type="text" id="device-key" required>
-      </div>
-      <div class="form-group">
-        <label for="device-value">Device Value:</label>
-        <input type="text" id="device-value" required>
-      </div>
-      <button type="submit">Hinzufügen / Bearbeiten</button>
-    </form>
-    <div class="form-group">
-      <label for="upload-file-devices">Datei hochladen:</label>
-      <input type="file" id="upload-file-devices">
-      <button class="upload-btn" data-category="devices">Hochladen</button>
-    </div>
-  </div>
 
   <!-- Loxone Section -->
   <div id="loxone-container" class="container">
@@ -188,10 +156,10 @@
 
   <!-- Models Section -->
   <div id="definitions-container" class="container">
-    <h2>Models</h2>
+    <h2>Definitions</h2>
     <form id="model-form">
       <div class="form-group">
-        <label for="model-name">Model Name:</label>
+        <label for="model-name">Definition:</label>
         <input type="text" id="model-name" required>
       </div>
       <div class="form-group">
@@ -216,10 +184,6 @@
         get: `${API_BASE_URL}/definitions`,
         post: `${API_BASE_URL}/definitions`,
       },
-      devices: {
-        get: `${API_BASE_URL}/devices`,
-        post: `${API_BASE_URL}/devices`,
-      },
       loxone: {
         get: `${API_BASE_URL}/loxone`,
         post: `${API_BASE_URL}/loxone`,
@@ -233,92 +197,12 @@
     const menuButtons = document.querySelectorAll(".menu button");
     const containers = document.querySelectorAll(".container");
 
-    function objectToDeviceArray(devicesObj) {
-      return Object.entries(devicesObj).map(([key, value]) => ({
-        key,
-        value,
-      }));
-    }
-    function editDevice(device) {
-      // Setze die Werte des zu bearbeitenden Geräts in das Formular
-      document.getElementById("device-key").value = device.key;
-      document.getElementById("device-value").value = device.value;
-
-      // Ändere den Submit-Button-Text, um den Bearbeitungsmodus anzuzeigen
-      const submitButton = document.querySelector("#device-form button[type='submit']");
-      submitButton.textContent = "Bearbeiten"; // Anzeige ändern, um den Benutzer zu informieren
-
-      // Optional: Markiere das Formular visuell für Bearbeitung
-      submitButton.style.backgroundColor = "#ffc107"; // Gelb für Bearbeitungsmodus
-      submitButton.style.color = "#000"; // Schwarzer Text für Kontrast
-
-      console.log(`Bearbeitungsmodus für das Gerät mit key="${device.key}" aktiviert.`);
-    }
-    // Löschen eines Geräts
-    async function deleteDevice(key) {
-      if (!confirm(`Möchtest du das Device mit dem Key "${key}" wirklich löschen?`)) {
-        return;
-      }
-
-      try {
-        const response = await fetchData(`${endpoints.devices.post}/${key}`, "DELETE");
-        if (response) {
-          alert("Device erfolgreich gelöscht!");
-          await loadDevices(); // Tabelle aktualisieren
-        } else {
-          alert("Fehler beim Löschen des Devices.");
-        }
-      } catch (error) {
-        console.error("Fehler beim Löschen des Devices:", error);
-        alert("Fehler beim Löschen des Devices.");
-      }
-    }
-
     document.querySelector(".restart-btn").addEventListener("click", async () => {
       const endpoint = `${API_BASE_URL}/restart`; // Passe deinen API-Endpunkt an
       const response = await fetch(endpoint, { method: "GET" });
     });
 
-    // Hinzufügen oder Bearbeiten eines Devices
-    document.getElementById("device-form").addEventListener("submit", async (event) => {
-      event.preventDefault(); // Standard-Formularaktion verhindern
 
-      const key = document.getElementById("device-key").value.trim();
-      const value = document.getElementById("device-value").value.trim();
-
-      if (!key || !value) {
-        alert("Bitte alle Felder ausfüllen!");
-        return;
-      }
-
-      const payload = { [key]: value };
-
-      try {
-        // Prüfen, ob das Device bereits existiert (lokal)
-        const existingRow = [...document.querySelectorAll("#devices-table tr")].find(
-          (row) => row.children[0].textContent === key
-        );
-
-        // Wenn das Gerät existiert → PUT (Bearbeiten), sonst POST (Hinzufügen)
-        const method = existingRow ? "PUT" : "POST";
-        const endpoint = method === "PUT"
-                                ? `${API_BASE_URL}/devices/${key}` // Dynamische URL für PUT
-                                : endpoints.devices.post;          // Standard-POST-URL
-
-        const response = await fetchData(endpoint, method, payload);
-
-        if (response) {
-          alert(`Device erfolgreich ${method === "POST" ? "hinzugefügt" : "bearbeitet"}!`);
-          document.getElementById("device-form").reset(); // Formular zurücksetzen
-          await loadDevices(); // Devices-Tabelle neu laden
-        } else {
-          alert(`Fehler beim ${method === "POST" ? "Hinzufügen" : "Bearbeiten"} des Devices.`);
-        }
-      } catch (error) {
-        console.error("Fehler beim Speichern:", error);
-        alert("Fehler beim Speichern der Devices-Daten.");
-      }
-    });
     // Event-Händler für das MQTT-Formular
     document.getElementById("mqtt-form").addEventListener("submit", async (event) => {
       // Verhindere das automatische Neuladen der Seite
@@ -428,58 +312,8 @@
       }
     }
 
-  // Funktion zum Rendern der Devices in die Tabelle
-  function renderDevices(devices) {
-    const devicesTableBody = document.getElementById("devices-table"); // Tabellen-Container
-    devicesTableBody.innerHTML = ""; // Tabelle leeren
 
-      devices.forEach((device) => {
-        const row = document.createElement("tr");
 
-        // Key-Spalte
-        const keyCell = document.createElement("td");
-        keyCell.textContent = device.key;
-        row.appendChild(keyCell);
-
-        // Value-Spalte
-        const valueCell = document.createElement("td");
-        valueCell.textContent = device.value;
-        row.appendChild(valueCell);
-
-        // Aktion-Spalte: Bearbeiten & Löschen
-        const actionsCell = document.createElement("td");
-
-        // Bearbeiten-Button
-        const editButton = document.createElement("button");
-        editButton.textContent = "Bearbeiten";
-        editButton.classList.add("edit-btn");
-        editButton.addEventListener("click", () => editDevice(device));
-        actionsCell.appendChild(editButton);
-
-        // Löschen-Button
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Löschen";
-        deleteButton.classList.add("delete-btn");
-        deleteButton.addEventListener("click", () => deleteDevice(device.key));
-        actionsCell.appendChild(deleteButton);
-
-        row.appendChild(actionsCell);
-
-        // Zeile zur Tabelle hinzufügen
-        devicesTableBody.appendChild(row);
-      });
-    }
-    // Devices laden und in Tabelle anzeigen
-    async function loadDevices() {
-      try {
-        const devices = await fetchData(endpoints.devices.get, "GET");
-        const devicesArray = objectToDeviceArray(devices || {});
-        renderDevices(devicesArray ); // Falls keine Daten vorhanden sind, wird ein leerer Array gerendert
-      } catch (error) {
-        console.error("Fehler beim Laden der Devices:", error);
-        alert("Fehler beim Laden der Devices.");
-      }
-    }
     async function loadConfig(category) {
       const url = endpoints[category]?.get;
       console.log("%cloadConfig aufgerufen", "color: green; font-size: 16px; font-weight: bold;");
@@ -496,10 +330,6 @@
         // Spezifisch für MQTT: Fülle das Formular bei Klick
         if (category === "mqtt") {
           renderMQTT(data || []);
-        }
-        if (category === "devices") {
-          const devicesArray = objectToDeviceArray(data || {});
-          renderDevices(devicesArray);
         }
       } catch (error) {
         console.error(`Fehler beim Laden der ${category}-Konfiguration:`, error);
@@ -570,7 +400,7 @@
     });
 
     // Initiale Lade-Konfiguration
-    ["definitions", "devices", "loxone", "mqtt"].forEach((category) => {
+    ["definitions",  "loxone", "mqtt"].forEach((category) => {
       loadConfig(category);
     });
   </script>
