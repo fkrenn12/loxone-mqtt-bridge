@@ -1,7 +1,7 @@
 {
     "definitions": [
         {
-            "name": "TS0044_2",
+            "definition(Zigbee2MQTT)": "TS0044_2",
             "description": "Wireless switch with 4 buttons",
             "vendor": "Tuya",
             "exposes": [
@@ -36,6 +36,41 @@
                     "{topic}/0"
                 ]
             }
+        },
+        {
+            "definition(Zigbee2MQTT)": "929002398602",
+            "description": "Hue 4 Button Switch",
+            "vendor": "Philips",
+            "exposes": [
+                "battery",
+                "action"
+            ],
+            "default_expose": "",
+            "value_mappings": {
+                "action": {
+                    "on_press": 1,
+                    "on_hold": 2,
+                    "on_press_release": 3,
+                    "on_hold_release": 4,
+                    "off_press": 5,
+                    "off_hold": 6,
+                    "off_press_release": 7,
+                    "off_hold_release": 8,
+                    "up_press": 9,
+                    "up_hold": 10,
+                    "up_press_release": 11,
+                    "up_hold_release": 12,
+                    "down_press":13,
+                    "down_hold": 14,
+                    "down_press_release": 15,
+                    "down_hold_release": 16
+                }
+            },
+            "default_value": 0,
+            "default_message_format": [
+                "{topic}/{value}"
+            ],
+            "specific_message_formats": {}
         }
     ]
 }
