@@ -34,7 +34,7 @@ def udp2mqtt(msg: str):
 
     try:
         model_name = device["model_name"]
-        model = next((m for m in config.definitions["definitions"] if m["name"] == model_name), None)
+        model = next((m for m in config.definitions["definitions"] if m["definition(Zigbee2MQTT)"] == model_name), None)
         key = model["default_expose"] if key is None else key
         value = apply_value_mapping(model, key, value)
     except:

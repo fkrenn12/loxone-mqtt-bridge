@@ -9,7 +9,7 @@ def mqtt2udp(topic: str, payload: dict):
     try:
         device = config.devices.get(device_name)
         model_name = device["model_name"]
-        model = next((m for m in config.definitions["definitions"] if m["name"] == model_name), None)
+        model = next((m for m in config.definitions["definitions"] if m["definition(Zigbee2MQTT)"] == model_name), None)
         exposes = model["exposes"]
         for key in exposes:
             value = payload.get(key, None)
