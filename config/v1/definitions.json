@@ -84,13 +84,16 @@
             "value_mappings": {
                 "action": {
                     "on": 1,
-                    "brightness_move_up": 2,
-                    "brightness_stop": 3,
-                    "on_hold_release": 4,
-                    "off": 5,
-                    "brightness_move_down": 6,
-                    "arrow_left_click": 7,
-                    "arrow_right_click": 8
+                    "off": 2,
+                    "brightness_move_up": 3,
+                    "brightness_move_down": 4,
+                    "brightness_stop": 5,
+                    "arrow_left_click": 6,
+                    "arrow_left_hold": 7,
+                    "arrow_left_release": 8,
+                    "arrow_right_click": 9,
+                    "arrow_right_hold": 10,
+                    "arrow_right_release": 11
                 }
             },
             "default_value": 0,
