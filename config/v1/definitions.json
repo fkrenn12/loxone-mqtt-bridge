@@ -71,6 +71,38 @@
                 "{topic}/{value}"
             ],
             "specific_message_formats": {}
+        },
+        {
+            "definition(Zigbee2MQTT)": "E2001/E2002/E2313",
+            "description": "Remote Control N2",
+            "vendor": "IKEA",
+            "exposes": [
+                "battery",
+                "action"
+            ],
+            "default_expose": "",
+            "value_mappings": {
+                "action": {
+                    "on": 1,
+                    "brightness_move_up": 2,
+                    "brightness_stop": 3,
+                    "on_hold_release": 4,
+                    "off": 5,
+                    "brightness_move_down": 6,
+                    "arrow_left_click": 7,
+                    "arrow_right_click": 8
+                }
+            },
+            "default_value": 0,
+            "default_message_format": [
+                "{topic}/{value}"
+            ],
+            "specific_message_formats": {
+                "action": [
+                    "{topic}/{value}",
+                    "{topic}/0"
+                ]
+            }
         }
     ]
 }
