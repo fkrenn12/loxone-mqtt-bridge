@@ -9,20 +9,26 @@ import ssl
 import schedule
 import threading
 
-UDP_PORT = int(os.environ.get('UDP_PORT', UDP_DEFAULT_PORT))
-API_PORT = int(os.environ.get('API_PORT', API_DEFAULT_PORT))
+UDP_PORT = int(os.environ.get('UDP_PORT'))
+UDP_PORT = UDP_PORT if UDP_PORT else UDP_DEFAULT_PORT
+API_PORT = int(os.environ.get('API_PORT'))
+API_PORT = API_PORT if API_PORT else API_DEFAULT_PORT
+
 HOST_IP = os.environ.get('HOST_IP', None)
 LOXONE_IP = os.environ.get('LOXONE_IP', None)
 MQTT_HOST = os.environ.get('MQTT_HOST', None)
 MQTT_PORT = os.environ.get('MQTT_PORT', None)
 MQTT_USER = os.environ.get('MQTT_USER', None)
 MQTT_PASS = os.environ.get('MQTT_PASS', None)
-MQTT_SSL = os.environ.get('MQTT_SSL', None)
-MQTT_SSL = to_boolean(MQTT_SSL) if MQTT_SSL else None
+MQTT_SSL = to_boolean(os.environ.get('MQTT_SSL')) if os.environ.get('MQTT_SSL') else False
+DOWNLOAD_URL_DEFINITIONS = os.environ.get('DOWNLOAD_URL_DEFINITIONS') or DEFAULT_DOWNLOAD_URL_DEFINITIONS
+UPDATE_DEFINITIONS_INTERVAL_MINUTES = int(os.environ.get("UPDATE_DEFINITIONS_INTERVAL_MINUTES", "0") or 0)
+
 
 print(">" * 100)
 print("Environment variables:")
 print(">" * 100)
+print(f"DOWNLOAD_URL_DEFINITIONS: {DOWNLOAD_URL_DEFINITIONS}")
 print(f"UDP_PORT: {UDP_PORT}")
 print(f"API_PORT: {API_PORT}")
 print(f"LOXONE_IP: {LOXONE_IP}")
@@ -47,7 +53,10 @@ class Config:
         self.mqtt = MQTTConfig()
         self.definitions = {}
         if update_interval_minutes:
+            logger.info(f"Start update definitions scheduler with interval of {update_interval_minutes} minutes.")
             schedule.every(update_interval_minutes).minutes.do(self.load_definitions)
+        else:
+            logger.info(f"Update definitions scheduler is disabled.")
         self.scheduler_thread = threading.Thread(target=self.run_scheduler, daemon=True)
         self.scheduler_thread.start()
 
@@ -101,9 +110,14 @@ class Config:
             save_json_file(LOXONE_CONFIG_FILE_PATH, self.loxone)
 
     def load_definitions(self):
+        global DOWNLOAD_URL_DEFINITIONS
         try:
-            logger.info(f"Try to download definitions from {DEFINITIONS_DOWNLOAD_URL}...")
-            result = requests.get(f"{DEFINITIONS_DOWNLOAD_URL}?cache_bypass={int(time.time())}",
+            download_url_definitions = DOWNLOAD_URL_DEFINITIONS
+            if not download_url_definitions.endswith("/"):
+                download_url_definitions += "/"
+            download_url_definitions += f"v{VERSION}/definitions.json"
+            logger.info(f"Try to download definitions from {download_url_definitions}...")
+            result = requests.get(f"{download_url_definitions}?cache_bypass={int(time.time())}",
                                   headers={"Cache-Control": "no-cache"}, timeout=5)
             logger.info("Successfully loaded definitions from GitHub.")
             self.definitions = json.loads(result.text)
@@ -149,5 +163,5 @@ class Config:
         self.load_definitions()
 
 
-config = Config(update_interval_minutes=10)
+config = Config(update_interval_minutes=UPDATE_DEFINITIONS_INTERVAL_MINUTES)
 config.load()

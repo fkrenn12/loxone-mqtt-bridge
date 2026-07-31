@@ -1,6 +1,6 @@
 VERSION = 1
-DEFINITIONS_DOWNLOAD_URL = (f"https://raw.githubusercontent.com/fkrenn12/"
-                       f"loxone-mqtt-bridge/master/config/v{VERSION}/definitions.json")
+DEFAULT_DOWNLOAD_URL_DEFINITIONS = (f"https://raw.githubusercontent.com/fkrenn12/"
+                       f"loxone-mqtt-bridge/master/config/")
 
 UDP_DEFAULT_PORT = 4444
 API_DEFAULT_PORT = 5602
