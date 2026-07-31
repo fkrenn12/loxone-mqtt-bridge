@@ -6,6 +6,8 @@ from logger import logger
 import time
 from fastapi_mqtt import MQTTConfig
 import ssl
+import schedule
+import threading
 
 UDP_PORT = int(os.environ.get('UDP_PORT', UDP_DEFAULT_PORT))
 API_PORT = int(os.environ.get('API_PORT', API_DEFAULT_PORT))
@@ -38,11 +40,28 @@ LOXONE_CONFIG_FILE_PATH = Path(f"{CONFIG_PATH}/loxone.json")
 
 
 class Config:
-    def __init__(self):
+    def __init__(self, update_interval_minutes: int = 0):
+        self.stop_scheduler = False
         self.devices = {}
         self.loxone = {}
         self.mqtt = MQTTConfig()
         self.definitions = {}
+        if update_interval_minutes:
+            schedule.every(update_interval_minutes).minutes.do(self.load_definitions)
+        self.scheduler_thread = threading.Thread(target=self.run_scheduler, daemon=True)
+        self.scheduler_thread.start()
+
+    def run_scheduler(self):
+        while not self.stop_scheduler:
+            schedule.run_pending()
+            time.sleep(1)
+
+    def stop(self):
+        self.stop_scheduler = True
+        logger.info("Scheduler stopped.")
+        if self.scheduler_thread.is_alive():
+            self.scheduler_thread.join()  # Warten, bis der Thread endet
+            logger.info("Scheduler thread has been joined.")
 
     def load_mqtt(self):
         try:
@@ -83,23 +102,22 @@ class Config:
 
     def load_definitions(self):
         try:
-            logger.info(f"try to download definitions from github location {DEFINITIONS_DOWNLOAD_URL}...")
+            logger.info(f"Try to download definitions from {DEFINITIONS_DOWNLOAD_URL}...")
             result = requests.get(f"{DEFINITIONS_DOWNLOAD_URL}?cache_bypass={int(time.time())}",
                                   headers={"Cache-Control": "no-cache"}, timeout=5)
-            logger.info("successfully loaded definitions from github")
+            logger.info("Successfully loaded definitions from GitHub.")
             self.definitions = json.loads(result.text)
             save_json_file(DEFINITIONS_CONFIG_FILE_PATH, self.definitions)
-            logger.info("definitions saved locally")
-        except:
-            logger.error(
-                f"definitions not found on github location {DEFINITIONS_DOWNLOAD_URL}, "
-                f"try to load local definitions instead...")
+            logger.info("Definitions saved locally.")
+        except Exception as e:
+            logger.error(f"Failed to load definitions from GitHub: {str(e)}")
+            logger.info("Trying to load definitions locally...")
             try:
                 self.definitions = load_json_file(DEFINITIONS_CONFIG_FILE_PATH)
-                logger.info("successfully loaded definitions from local")
-            except:
+                logger.info("Successfully loaded definitions locally.")
+            except Exception as e:
                 self.definitions = {}
-                logger.error("definitions not found locally - no definitions available")
+                logger.error("Failed to load definitions locally – no definitions available.")
 
     def handle_incoming_zigbee2mqtt_bridge_devices_message(self, device_list: list):
         mqtt_topic = "zigbee2mqtt"
@@ -131,5 +149,5 @@ class Config:
         self.load_definitions()
 
 
-config = Config()
+config = Config(update_interval_minutes=10)
 config.load()

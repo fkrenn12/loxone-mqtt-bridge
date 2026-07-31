@@ -37,6 +37,7 @@ async def _lifespan(_app: FastAPI):
         logger.error(f'{e}')
     yield
     await fast_mqtt.mqtt_shutdown()
+    config.stop()
 
 
 app = FastAPI(lifespan=_lifespan,
