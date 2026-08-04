@@ -9,9 +9,9 @@ import ssl
 import schedule
 import threading
 
-UDP_PORT = int(os.environ.get('UDP_PORT'))
+UDP_PORT = int(os.environ.get('UDP_PORT', 0))
 UDP_PORT = UDP_PORT if UDP_PORT else UDP_DEFAULT_PORT
-API_PORT = int(os.environ.get('API_PORT'))
+API_PORT = int(os.environ.get('API_PORT', 0))
 API_PORT = API_PORT if API_PORT else API_DEFAULT_PORT
 
 HOST_IP = os.environ.get('HOST_IP', None)

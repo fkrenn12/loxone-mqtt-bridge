@@ -12,11 +12,11 @@ def udp2mqtt(msg: str):
     splitted = msg.split("/")
     if len(splitted) == 2:
         device_name = splitted[0]
-        key = None
+        prop = None
         value = splitted[1]
     elif len(splitted) == 3:
         device_name = splitted[0]
-        key = splitted[1]
+        prop = splitted[1]
         value = splitted[2]
     else:
         logger.error(f"Invalid message format:{msg}")
@@ -35,13 +35,13 @@ def udp2mqtt(msg: str):
     try:
         model_name = device["model_name"]
         model = next((m for m in config.definitions["definitions"] if m["definition(Zigbee2MQTT)"] == model_name), None)
-        key = model["default_expose"] if key is None else key
-        value = apply_value_mapping(model, key, value)
+        prop = model["default_expose"] if prop is None else prop
+        value = apply_value_mapping(model, prop, value)
     except:
         # no valid model definition defined
         logger.error(f"No information found modeling to UDP: {device}")
-        if key is None:
-            logger.error(f"Cannot process message - missing key: {msg}")
+        if prop is None:
+            logger.error(f"Cannot process message - missing property: {msg}")
             return
 
     value = cast_to_numeric(value)
@@ -56,10 +56,10 @@ def udp2mqtt(msg: str):
         pass
 
     try:
-        payload = {key: value}
+        payload = {prop: value}
         json.dumps(payload)  # Verify if payload is serializable to JSON
     except (TypeError, JSONDecodeError) as e:
-        logger.error(f"Invalid JSON data: {key}:{value} - {e}")
+        logger.error(f"Invalid JSON data: {prop}:{value} - {e}")
         return
 
     if topic:
