@@ -13,6 +13,8 @@ from ws_node import ws_client
 from udp2mqtt import udp2mqtt
 from udp2ws import udp2ws
 from udp_node import UDPServerProtocol
+import os
+import signal
 
 description = """
 ## 🚀🚀 Loxone-MQTT Bridge 🚀🚀
@@ -41,8 +43,10 @@ async def _lifespan(_app: FastAPI):
         except asyncio.TimeoutError:
             raise Exception(
                 f"MQTT connecting time out - check MQTT broker settings: '{fast_mqtt.config.username}'@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
+
     except Exception as e:
         logger.error(f'{e}')
+        os.kill(os.getpid(), signal.SIGTERM)
     yield
     await fast_mqtt.mqtt_shutdown()
     await ws_client.close()
@@ -163,8 +167,6 @@ async def serve_frontend():
 
 @app.get("/api/restart")
 async def restart_server():
-    import os
-    import signal
     os.kill(os.getpid(), signal.SIGTERM)
     return {"message": "Server wird neu gestartet..."}
 
