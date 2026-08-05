@@ -9,7 +9,9 @@ from fastapi.staticfiles import StaticFiles
 import models
 from logger import logger
 from mqtt_node import fast_mqtt
+from ws_node import ws_client
 from udp2mqtt import udp2mqtt
+from udp2ws import udp2ws
 from udp_node import UDPServerProtocol
 
 description = """
@@ -25,10 +27,16 @@ async def _lifespan(_app: FastAPI):
     import asyncio
     try:
         await asyncio.get_event_loop().create_datagram_endpoint(
-            lambda: UDPServerProtocol(udp2mqtt),
+            lambda: UDPServerProtocol(udp2mqtt, udp2ws),
             local_addr=("0.0.0.0", config.loxone.get(KEY_UDP_PORT, UDP_PORT)),
         )
         try:
+            asyncio.get_event_loop().create_task(ws_client.listen())
+        except Exception as e:
+            logger.error(f"Error starting websocket client: {e}")
+
+        try:
+            print(f"Start MQTT client with config: {fast_mqtt.config}")
             await asyncio.wait_for(fast_mqtt.mqtt_startup(), timeout=2)
         except asyncio.TimeoutError:
             raise Exception(
@@ -37,6 +45,7 @@ async def _lifespan(_app: FastAPI):
         logger.error(f'{e}')
     yield
     await fast_mqtt.mqtt_shutdown()
+    await ws_client.close()
     config.stop()
 
 
