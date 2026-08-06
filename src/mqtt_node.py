@@ -18,7 +18,7 @@ fast_mqtt = FastMQTT(config=config.mqtt, mqtt_logger=logger)
 async def restart_mqtt_broker():
     await fast_mqtt.mqtt_shutdown()
     logger.info("MQTT broker stopped. Starting again...")
-    await asyncio.wait_for(fast_mqtt.mqtt_startup(), 2)
+    await asyncio.wait_for(fast_mqtt.mqtt_startup(), 10)
     logger.info("MQTT broker started.")
 
 

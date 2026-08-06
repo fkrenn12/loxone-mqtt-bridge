@@ -66,7 +66,7 @@ async def connect_mqtt_broker():
     try:
         logger.info(
             f"🔌 MQTT Try first connection to broker: {fast_mqtt.config.username}@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
-        await asyncio.wait_for(fast_mqtt.mqtt_startup(), timeout=2)
+        await asyncio.wait_for(fast_mqtt.mqtt_startup(), timeout=10)
         logger.info("✅ MQTT connected successfully.")
     except asyncio.TimeoutError:
         raise Exception(

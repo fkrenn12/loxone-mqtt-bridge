@@ -20,7 +20,7 @@ class WebSocketClient:
     async def connect(self):
         try:
             logger.info(f"🔌 WS Try first connection to {self.url}")
-            self.websocket = await websockets.connect(self.url, open_timeout=2)
+            self.websocket = await websockets.connect(self.url, open_timeout=10)  # do not use too short timeouts
             connect_response = await self.websocket.recv()
             if connect_response and json.loads(connect_response).get("type") == "auth_required":
                 await self.websocket.send(json.dumps({
@@ -37,6 +37,7 @@ class WebSocketClient:
                 logger.info(f"✅  ️WS Successfully connected")
                 return True  # successfully connected
         except Exception as e:
+            self.websocket = None
             raise e
 
     async def reconnect_loop(self):
@@ -56,7 +57,7 @@ class WebSocketClient:
                 logger.info(f"📤 WS message sent: {message}")
         except Exception as e:
             logger.error(f"⚠️ WS Error sending a message: {e}")
-            raise
+            await self.reconnect_loop()
 
     async def receive(self):
         try:
