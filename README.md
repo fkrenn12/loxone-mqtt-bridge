@@ -1,8 +1,8 @@
-# Loxone-MQTT Bridge
+# LoxHomeassistant Bridge
 
 ## 🚀 Introduction
 
-The **LoxHomeassistant** is a backend service working as a bridge between **Loxone UDP messages** and **Zigbee2MQTT** or **Matter Server**.
+The **LoxHomeassistant** is a backend service working as a bridge between **Loxone UDP messages** and **Zigbee2MQTT** and **Matter Server**.
 
 ---
 
@@ -19,4 +19,4 @@ This project is licensed under the **MIT License**.
 
 ---
 
-### Enjoy working with the Loxone-MQTT Bridge! 😊
+### Enjoy working with the LoxHomeassistant Bridge! 😊
