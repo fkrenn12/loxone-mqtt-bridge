@@ -19,7 +19,7 @@ class WebSocketClient:
 
     async def connect(self):
         try:
-            logger.info(f"🔌WS Try first connection to {self.url}")
+            logger.info(f"🔌 WS Try first connection to {self.url}")
             self.websocket = await websockets.connect(self.url, open_timeout=2)
             connect_response = await self.websocket.recv()
             if connect_response and json.loads(connect_response).get("type") == "auth_required":
@@ -29,12 +29,12 @@ class WebSocketClient:
                 }))
                 auth_data = json.loads(await self.websocket.recv())
                 if auth_data.get("type") == "auth_ok":
-                    logger.info(f"❤️WS Successfully connected and authenticated")
+                    logger.info(f"✅❤ ️ WS Successfully connected and authenticated")
                     return True  # successfully connected
                 else:
-                    raise Exception(f"❌WS Authentication failed: {auth_data}")
+                    raise Exception(f"❌ WS Authentication failed: {auth_data}")
             else:
-                logger.info(f"❤️WS Successfully connected")
+                logger.info(f"✅  ️WS Successfully connected")
                 return True  # successfully connected
         except Exception as e:
             raise e
@@ -64,7 +64,8 @@ class WebSocketClient:
             logger.info(f"📨 WS Message received: {message}")
             return json.loads(message)
         except Exception as e:
-            logger.error(f"⚠️ WS Error reading a message: {e}")
+            if self.running:
+                logger.error(f"⚠️ WS Error reading a message: {e}")
             raise
 
     async def subscribe_to_events(self, event_type: str):
@@ -82,7 +83,7 @@ class WebSocketClient:
                     await self.reconnect_loop()
                 # Subscribe to events (necessary for every new connection)
                 await self.subscribe_to_events("state_changed")
-                logger.info(f"📡 WS Starte Event-Überwachung")
+                logger.info(f"📡 WS Subscribe to events")
                 # listen to events
                 while self.running:
                     event = await self.receive()
@@ -92,18 +93,20 @@ class WebSocketClient:
                     except Exception as e:
                         logger.error(f"WS Error in event handling: {e}")
             except (ConnectionClosedError, ConnectionClosedOK) as e:
-                logger.warning(f"❌ Verbindung getrennt: {e}. Versuche erneut zu verbinden...")
-                await asyncio.sleep(self.reconnect_interval)  # Wartezeit vor erneutem Verbindungsversuch
+                if self.running:
+                    logger.warning(f"❌ Connection closed: {e}. Reconnecting...")
+                await asyncio.sleep(self.reconnect_interval)
             except Exception as e:
-                logger.error(f"⚠️ Fehler bei der Event-Überwachung: {e}")
-                await asyncio.sleep(self.reconnect_interval)  # Wartezeit vor erneutem Versuch
+                if self.running:
+                    logger.error(f"⚠️ Error during waiting for event: {e}")
+                await asyncio.sleep(self.reconnect_interval)
 
     async def close(self):
         self.running = False
         if self.websocket:
             await self.websocket.close()
             self.websocket = None
-            logger.info("🔌 Verbindung geschlossen.")
+            logger.info("🔌 WS Connection closed.")
 
 
 ws_client = WebSocketClient(url=HA_URL, token=HOME_ASSISTANT_TOKEN,

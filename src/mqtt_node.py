@@ -69,17 +69,8 @@ def connect(client: MQTTClient, flags: int, rc: int, properties: Any):
     username = client._username.decode() if type(client._username) is bytes else client._username
     # password = client._password.decode() if type(client._password) is bytes else client._password
     host = client._host.decode() if type(client._host) is bytes else client._host
-    logger.info(
-        f"Connected to: {host}:{client._port} {username} flags {flags}, rc {rc}, properties {properties}")
-    #logger.debug(f"mqtt_config_file_path: {MQTT_CONFIG_FILE_PATH}")
-    # mqtt_credentials = load_json_file(MQTT_CONFIG_FILE_PATH)
-    # mqtt_credentials["last_connection_time"] = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(time.time()))
-    # mqtt_credentials["host"] = host
-    # mqtt_credentials["port"] = client._port
-    # mqtt_credentials["username"] = username
-    # mqtt_credentials["password"] = password
-    # mqtt_credentials["ssl"] = bool(type(client._ssl) == ssl.SSLContext)
-    # save_json_file(MQTT_CONFIG_FILE_PATH, mqtt_credentials)
+    # logger.info(
+    #    f"Connected to: {host}:{client._port} {username} flags {flags}, rc {rc}, properties {properties}")
     client.subscribe("zigbee2mqtt/bridge/devices", qos=1)
     client.subscribe("hue2mqtt/bridge/devices", qos=1)
 

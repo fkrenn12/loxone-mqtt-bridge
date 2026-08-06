@@ -15,6 +15,7 @@ from udp2ws import udp2ws
 from udp_node import UDPServerProtocol
 import os
 import signal
+import asyncio
 
 description = """
 ## 🚀🚀 Loxone-MQTT Bridge 🚀🚀
@@ -26,39 +27,61 @@ description = """
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
-    import asyncio
     try:
-        # UDP endpoint
-        try:
-            await asyncio.get_event_loop().create_datagram_endpoint(
-                lambda: UDPServerProtocol(udp2mqtt, udp2ws),
-                local_addr=("0.0.0.0", config.loxone.get(KEY_UDP_PORT, UDP_PORT)),
-            )
-        except Exception as e:
-            raise Exception(f"🤢Error starting UDP server: {e}")
-        # WS connection
-        try:
-            if await ws_client.connect():
-                asyncio.get_event_loop().create_task(ws_client.listen())
-        except Exception as e:
-            raise Exception(f"🤢Error connecting to websocket client {ws_client.url}:\n\r{e}")
-
-        # MQTT connection
-        try:
-            logger.info(f"🔌MQTT Try first connection to broker: {fast_mqtt.config.username}@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
-            await asyncio.wait_for(fast_mqtt.mqtt_startup(), timeout=2)
-        except Exception as e:
-            raise Exception(
-                f"⏲️🤢MQTT connecting time out - check broker settings: '{fast_mqtt.config.username}'@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
-
+        await start_udp_server()
+        await connect_websocket_client()
+        await connect_mqtt_broker()
     except Exception as e:
         logger.error(e)
-        logger.info(f"👎Shutting down ...docker engine will restart the container.")
+        logger.info("👎 Shutting down ...docker engine will restart the container.")
+        await shutdown_services()
         os.kill(os.getpid(), signal.SIGTERM)
     yield
+    await shutdown_services()
+
+
+async def start_udp_server():
+    try:
+        await asyncio.get_event_loop().create_datagram_endpoint(
+            lambda: UDPServerProtocol(udp2mqtt, udp2ws),
+            local_addr=("0.0.0.0", config.loxone.get(KEY_UDP_PORT, UDP_PORT)),
+        )
+        logger.info("✅ UDP server started successfully.")
+    except Exception as e:
+        raise Exception(f"🤢 Error starting UDP server: {e}")
+
+
+async def connect_websocket_client():
+    try:
+        if await ws_client.connect():
+            logger.info(f"✅ Successfully connected to WebSocket: {ws_client.url}")
+            asyncio.get_event_loop().create_task(ws_client.listen())
+        else:
+            logger.warning(f"⚠️ WebSocket connection attempt failed: {ws_client.url}")
+    except Exception as e:
+        raise Exception(f"🤢 Error connecting to WebSocket client {ws_client.url}:\n\r{e}")
+
+
+async def connect_mqtt_broker():
+    try:
+        logger.info(
+            f"🔌 MQTT Try first connection to broker: {fast_mqtt.config.username}@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
+        await asyncio.wait_for(fast_mqtt.mqtt_startup(), timeout=2)
+        logger.info("✅ MQTT connected successfully.")
+    except asyncio.TimeoutError:
+        raise Exception(
+            f"⏲️🤢 MQTT connecting timed out - check broker settings: '{fast_mqtt.config.username}'@{fast_mqtt.config.host}:{fast_mqtt.config.port}"
+        )
+    except Exception as e:
+        raise Exception(f"🤢 Unexpected MQTT connection error: {e}")
+
+
+async def shutdown_services():
+    logger.info("🔌 Shutting down services gracefully...")
     await fast_mqtt.mqtt_shutdown()
     await ws_client.close()
     config.stop()
+    logger.info("👍 Shutdown complete.")
 
 
 app = FastAPI(lifespan=_lifespan,
