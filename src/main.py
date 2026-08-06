@@ -28,24 +28,32 @@ description = """
 async def _lifespan(_app: FastAPI):
     import asyncio
     try:
-        await asyncio.get_event_loop().create_datagram_endpoint(
-            lambda: UDPServerProtocol(udp2mqtt, udp2ws),
-            local_addr=("0.0.0.0", config.loxone.get(KEY_UDP_PORT, UDP_PORT)),
-        )
+        # UDP endpoint
         try:
-            asyncio.get_event_loop().create_task(ws_client.listen())
+            await asyncio.get_event_loop().create_datagram_endpoint(
+                lambda: UDPServerProtocol(udp2mqtt, udp2ws),
+                local_addr=("0.0.0.0", config.loxone.get(KEY_UDP_PORT, UDP_PORT)),
+            )
         except Exception as e:
-            logger.error(f"Error starting websocket client: {e}")
-
+            raise Exception(f"🤢Error starting UDP server: {e}")
+        # WS connection
         try:
-            print(f"Start MQTT client with config: {fast_mqtt.config}")
+            if await ws_client.connect():
+                asyncio.get_event_loop().create_task(ws_client.listen())
+        except Exception as e:
+            raise Exception(f"🤢Error connecting to websocket client {ws_client.url}:\n\r{e}")
+
+        # MQTT connection
+        try:
+            logger.info(f"🔌MQTT Try first connection to broker: {fast_mqtt.config.username}@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
             await asyncio.wait_for(fast_mqtt.mqtt_startup(), timeout=2)
-        except asyncio.TimeoutError:
+        except Exception as e:
             raise Exception(
-                f"MQTT connecting time out - check MQTT broker settings: '{fast_mqtt.config.username}'@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
+                f"⏲️🤢MQTT connecting time out - check broker settings: '{fast_mqtt.config.username}'@{fast_mqtt.config.host}:{fast_mqtt.config.port}")
 
     except Exception as e:
-        logger.error(f'{e}')
+        logger.error(e)
+        logger.info(f"👎Shutting down ...docker engine will restart the container.")
         os.kill(os.getpid(), signal.SIGTERM)
     yield
     await fast_mqtt.mqtt_shutdown()

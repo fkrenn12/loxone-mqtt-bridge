@@ -1,10 +1,7 @@
 import asyncio
 import websockets
-import json
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
-from logger import logger
 from config import *
-from matter import compare_states
 from ws2udp import ws_event_callback
 
 HA_URL = f"ws://{HOME_ASSISTANT_IP}:8123/api/websocket"
@@ -21,25 +18,31 @@ class WebSocketClient:
         self.lock = asyncio.Lock()
 
     async def connect(self):
+        try:
+            logger.info(f"🔌WS Try first connection to {self.url}")
+            self.websocket = await websockets.connect(self.url, open_timeout=2)
+            connect_response = await self.websocket.recv()
+            if connect_response and json.loads(connect_response).get("type") == "auth_required":
+                await self.websocket.send(json.dumps({
+                    "type": "auth",
+                    "access_token": self.token
+                }))
+                auth_data = json.loads(await self.websocket.recv())
+                if auth_data.get("type") == "auth_ok":
+                    logger.info(f"❤️WS Successfully connected and authenticated")
+                    return True  # successfully connected
+                else:
+                    raise Exception(f"❌WS Authentication failed: {auth_data}")
+            else:
+                logger.info(f"❤️WS Successfully connected")
+                return True  # successfully connected
+        except Exception as e:
+            raise e
+
+    async def reconnect_loop(self):
         while self.running:
             try:
-                logger.info(f"🔌 WS Try connection to Home Assistant WebSocket {self.url} ...")
-                self.websocket = await websockets.connect(self.url)
-                connect_response = await self.websocket.recv()
-                if connect_response and json.loads(connect_response).get("type") == "auth_required":
-                    await self.websocket.send(json.dumps({
-                        "type": "auth",
-                        "access_token": self.token
-                    }))
-                    auth_response = await self.websocket.recv()
-                    auth_data = json.loads(auth_response)
-                    if auth_data.get("type") == "auth_ok":
-                        logger.info(f"❤️ WS Successfully authenticates: {auth_data}")
-                        return True  # successfully connected
-                    else:
-                        raise Exception(f"❌ WS Authentication failed: {auth_data}")
-                else:
-                    return True  # successfully connected
+                return await self.connect()
             except Exception as e:
                 logger.error(f"⚠️ WS Connection error: {e}. Next try to connect in {self.reconnect_interval} seconds.")
                 await asyncio.sleep(self.reconnect_interval)  # Wartezeit vor neuer Verbindung
@@ -76,7 +79,7 @@ class WebSocketClient:
         while self.running:
             try:
                 if self.websocket is None:
-                    await self.connect()
+                    await self.reconnect_loop()
                 # Subscribe to events (necessary for every new connection)
                 await self.subscribe_to_events("state_changed")
                 logger.info(f"📡 WS Starte Event-Überwachung")
