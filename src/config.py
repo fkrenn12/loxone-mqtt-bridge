@@ -16,6 +16,10 @@ API_PORT = API_PORT if API_PORT else API_DEFAULT_PORT
 
 HOST_IP = os.environ.get('HOST_IP', None)
 LOXONE_IP = os.environ.get('LOXONE_IP', None)
+HOME_ASSISTANT_IP = os.environ.get('HOME_ASSISTANT_IP', "homeassistant")
+HOME_ASSISTANT_TOKEN = os.environ.get('HOME_ASSISTANT_TOKEN', None)
+
+
 MQTT_HOST = os.environ.get('MQTT_HOST', None)
 MQTT_PORT = os.environ.get('MQTT_PORT', None)
 MQTT_USER = os.environ.get('MQTT_USER', None)
