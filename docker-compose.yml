@@ -4,6 +4,9 @@ services:
       context: ./src
     # image: fkrenn12/loxone-mqtt-bridge
     container_name: loxone-mqtt-bridge
+    dns:
+      #- 8.8.8.8  # Beispiel: Google DNS
+      - 192.168.0.1  # Beispiel: Lokaler DNS-Server
     restart: always
     stdin_open: true # docker run -i
     tty: true        # docker run -t
@@ -12,6 +15,8 @@ services:
       - UDP_PORT=${UDP_PORT:-4444}
       - HOST_IP=${HOST_IP:-}
       - LOXONE_IP=${LOXONE_IP:-}
+      - HOME_ASSISTANT_IP=${HOME_ASSISTANT_IP:-}
+      - HOME_ASSISTANT_TOKEN=${HOME_ASSISTANT_TOKEN:-}
       - MQTT_HOST=${MQTT_HOST:-}
       - MQTT_PORT=${MQTT_PORT:-}
       - MQTT_USER=${MQTT_USER:-}
