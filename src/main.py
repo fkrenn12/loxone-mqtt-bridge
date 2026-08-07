@@ -31,7 +31,7 @@ async def _lifespan(_app: FastAPI):
         await start_udp_server()
         await connect_websocket_client()
         await connect_mqtt_broker()
-        await start_udp_broadcast()
+        # await start_udp_broadcast()
 
     except Exception as e:
         logger.error(e)

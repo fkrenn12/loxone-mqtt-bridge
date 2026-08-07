@@ -55,14 +55,10 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
 async def udp_broadcast_loop(ip, port, message, interval):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.setblocking(False)
-
-    loop = asyncio.get_event_loop()
-
     while True:
         try:
             to_send = f"{message}:UTC:{time.time()}"
-            await loop.sock_sendto(sock, to_send.encode(), (ip, port))
+            sock.sendto(to_send.encode(), (ip, port))
             logger.info(f"UDP Broadcast done: {to_send}")
         except Exception as e:
             logger.error(f"Error UDP broadcasting: {e}")
