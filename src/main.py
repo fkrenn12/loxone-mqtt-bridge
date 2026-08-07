@@ -31,7 +31,7 @@ async def _lifespan(_app: FastAPI):
         await start_udp_server()
         await connect_websocket_client()
         await connect_mqtt_broker()
-        # await start_udp_broadcast()
+        await start_udp_broadcast()
 
     except Exception as e:
         logger.error(e)
@@ -67,6 +67,7 @@ async def connect_websocket_client():
 async def start_udp_broadcast():
     loop = asyncio.get_event_loop()
     try:
+        logger.info("Starting UDP broadcast service...ip=192.168.0.255, port=4444")
         loop.create_task(udp_broadcast_loop(ip="192.168.0.255", port=4444,
                                             message="ping", interval=10))
     except Exception as e:

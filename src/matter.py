@@ -6,7 +6,12 @@ services_database = {
         "color_temp_kelvin": lambda value: {"color_temp_kelvin": value}}
 }
 
-service_switch = {"light": {"brightness": "turn_on", "color_temp_kelvin": "turn_on"}}
+service_switch = {"light": {"brightness": "turn_on",
+                            "color_temp_kelvin": "turn_on",
+                            "color": "turn_on"}}
+
+
+
 
 
 def handle_matter_service(domain, service, value):

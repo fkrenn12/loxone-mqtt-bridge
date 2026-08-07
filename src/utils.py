@@ -63,3 +63,22 @@ def get_message_formats(model: dict, key: str):
     if isinstance(default_format, dict):
         default_format = [default_format]
     return specific_format if specific_format else default_format
+
+
+def loxone_rgb_format_to_hue_sat(rgb_text):
+    rgb = {item.split('=')[0]: float(item.split('=')[1][:-1]) / 100 for item in rgb_text.split(', ')}
+    r, g, b = rgb['R'], rgb['G'], rgb['B']
+    c_max = max(r, g, b)
+    c_min = min(r, g, b)
+    delta = c_max - c_min
+    hue = 0
+    if delta == 0:
+        hue = 0
+    elif c_max == r:
+        hue = 60 * (((g - b) / delta) % 6)
+    elif c_max == g:
+        hue = 60 * (((b - r) / delta) + 2)
+    elif c_max == b:
+        hue = 60 * (((r - g) / delta) + 4)
+    saturation = 0 if c_max == 0 else (delta / c_max) * 100
+    return {"hue": hue, "sat": saturation}
