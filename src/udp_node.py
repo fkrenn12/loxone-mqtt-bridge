@@ -4,7 +4,8 @@ from constants import *
 import socket
 from config import config, UDP_PORT
 from threading import Lock
-
+import time
+from datetime import datetime
 lock = Lock()
 
 
@@ -50,26 +51,8 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
     def connection_lost(self, exc):
         logger.error("UDP server connection closed")
 
-import asyncio
-import socket
-import argparse
-
 
 async def udp_broadcast_loop(ip, port, message, interval):
-    """
-    Sendet eine UDP-Broadcast-Nachricht in einem asynchronen Intervall.
-
-    Args:
-        ip (str): Die Ziel-Broadcast-Adresse (z. B. 192.168.0.255 oder <broadcast>).
-        port (int): Der Ziel-UDP-Port.
-        message (str): Die Nachricht, die gesendet werden soll.
-        interval (int): Das Intervall in Sekunden zwischen den Nachrichten.
-    """
-    print(f"Starte asynchronen UDP-Broadcaster...\nSende Broadcast an {ip}:{port}")
-    print(f"Nachricht: {message}")
-    print(f"Wiederholungsintervall: {interval} Sekunden\n")
-
-    # Erstelle UDP-Socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.setblocking(False)
@@ -78,25 +61,10 @@ async def udp_broadcast_loop(ip, port, message, interval):
 
     while True:
         try:
-            await loop.sock_sendto(sock, message.encode(), (ip, port))
-            print(f"Broadcast gesendet: {message}")
+            to_send = f"{message}:UTC:{time.time()}"
+            await loop.sock_sendto(sock, to_send.encode(), (ip, port))
+            logger.info(f"UDP Broadcast done: {to_send}")
         except Exception as e:
-            print(f"Fehler beim Senden des Broadcasts: {e}")
+            logger.error(f"Error UDP broadcasting: {e}")
         await asyncio.sleep(interval)
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Asynchrones UDP Broadcaster-Skript")
-    parser.add_argument("--ip", type=str, default="192.168.0.255", help="Broadcast-Adresse (Standard: 192.168.0.255)")
-    parser.add_argument("--port", type=int, default=12345, help="UDP-Port (Standard: 12345)")
-    parser.add_argument("--message", type=str, default="Async Hello, World!",
-                        help="Nachricht, die gesendet wird (Standard: Async Hello, World!)")
-    parser.add_argument("--interval", type=int, default=5,
-                        help="Zeitintervall in Sekunden zwischen den Nachrichten (Standard: 5 Sekunden)")
-
-    args = parser.parse_args()
-
-    try:
-        asyncio.run(udp_broadcast_loop(args.ip, args.port, args.message, args.interval))
-    except KeyboardInterrupt:
-        print("\nBroadcast gestoppt. Programm beendet.")

@@ -12,7 +12,7 @@ from mqtt_node import fast_mqtt
 from ws_node import ws_client
 from udp2mqtt import udp2mqtt
 from udp2ws import udp2ws
-from udp_node import UDPServerProtocol
+from udp_node import UDPServerProtocol, udp_broadcast_loop
 import os
 import signal
 import asyncio
@@ -31,6 +31,8 @@ async def _lifespan(_app: FastAPI):
         await start_udp_server()
         await connect_websocket_client()
         await connect_mqtt_broker()
+        await start_udp_broadcast()
+
     except Exception as e:
         logger.error(e)
         logger.info("👎 Shutting down ...docker engine will restart the container.")
@@ -60,6 +62,15 @@ async def connect_websocket_client():
             logger.warning(f"⚠️ WebSocket connection attempt failed: {ws_client.url}")
     except Exception as e:
         raise Exception(f"🤢 Error connecting to WebSocket client {ws_client.url}:\n\r{e}")
+
+
+async def start_udp_broadcast():
+    loop = asyncio.get_event_loop()
+    try:
+        loop.create_task(udp_broadcast_loop(ip="192.168.0.255", port=4444,
+                                            message="ping", interval=10))
+    except Exception as e:
+        raise Exception(f"🤢 Error starting the udp broadcast service{e}")
 
 
 async def connect_mqtt_broker():
