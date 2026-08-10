@@ -3,7 +3,7 @@ from utils import *
 from logger import logger
 from ws_node import ws_client
 from matter import handle_matter_service
-
+import time
 id_counter = 10
 
 
@@ -41,9 +41,9 @@ def udp2ws(msg: str):
     to_send = {
         "id": id_counter,  # Neue ID für diesen Aufruf
         "type": "call_service",
-        "domain": f"{domain}",
-        "service": f"{service}",
-        "target": {"entity_id": f"{entity_id}"},
+        "domain": domain,
+        "service": service,
+        "target": {"entity_id": entity_id},
         "service_data": service_data
     }
     asyncio.create_task(ws_client.send(to_send))

@@ -1,3 +1,4 @@
+from idlelib.debugobj_r import remote_object_tree_item
 from pathlib import Path
 import json
 from typing import Any
@@ -63,6 +64,43 @@ def get_message_formats(model: dict, key: str):
     if isinstance(default_format, dict):
         default_format = [default_format]
     return specific_format if specific_format else default_format
+
+
+def convert_brightness(value):
+    return int(value * 2.55)
+
+
+def decode_loxone_color_to_brightness(color_code):
+    blue = (color_code // 1000000) / 100
+    green = (color_code // 1000 % 1000) / 100
+    red = (color_code % 1000) / 100
+    blue = min(int(blue * 255), 255)
+    green = min(int(green * 255), 255)
+    red = min(int(red * 255), 255)
+    maxval = max(red, green, blue)
+    if maxval == 0:
+        return 0
+    return int((maxval * 255) / 255)
+
+
+def decode_loxone_color_to_rgb(color_code):
+    # print(color_code)
+    blue = (color_code // 1000000) / 100
+    green = (color_code // 1000 % 1000) / 100
+    red = (color_code % 1000) / 100
+    blue = min(int(blue * 255), 255)
+    green = min(int(green * 255), 255)
+    red = min(int(red * 255), 255)
+    maxval = max(red, green, blue)
+    if maxval == 0:
+        return [0, 0, 0]
+    factor = 255 / maxval
+    red *= factor
+    green *= factor
+    blue *= factor
+    # print(red, green, blue)
+    return [int(red), int(green), int(blue)]
+    #return [min(int(red * 255), 255), min(int(green * 255), 255), min(int(blue * 255), 255)]
 
 
 def loxone_rgb_format_to_hue_sat(rgb_text):

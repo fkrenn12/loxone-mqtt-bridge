@@ -1,22 +1,33 @@
+from utils import loxone_rgb_format_to_hue_sat
+from utils import decode_loxone_color_to_rgb, decode_loxone_color_to_brightness, convert_brightness
+
 services_database = {
     "light": {
         "turn_on": {},
         "turn_off": {},
-        "brightness": lambda value: {"brightness": value},
-        "color_temp_kelvin": lambda value: {"color_temp_kelvin": value}}
+        "brightness": lambda value: {"brightness": convert_brightness(value)},
+        "color_temp_kelvin": lambda value: {"color_temp_kelvin": value},
+        "rgb": lambda value: {"rgb_color": decode_loxone_color_to_rgb(value),
+                              "brightness": decode_loxone_color_to_brightness(value),
+                              },
+        "color": lambda value: {"rgb_color": decode_loxone_color_to_rgb(value),
+                                "brightness": decode_loxone_color_to_brightness(value),
+                                }
+    }
 }
 
 service_switch = {"light": {"brightness": "turn_on",
                             "color_temp_kelvin": "turn_on",
-                            "color": "turn_on"}}
-
-
-
+                            "color": "turn_on",
+                            "rgb": "turn_on"}}
 
 
 def handle_matter_service(domain, service, value):
     try:
         service_data = services_database[domain][service](value)
+        if value >= 100100100:
+            service_data = {"color_temp_kelvin": 2702, "brightness": 125}
+            service = "turn_on"
     except:
         service_data = {}
 
