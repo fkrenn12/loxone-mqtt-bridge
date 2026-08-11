@@ -66,10 +66,6 @@ def get_message_formats(model: dict, key: str):
     return specific_format if specific_format else default_format
 
 
-def convert_brightness(value):
-    return int(value * 2.55)
-
-
 def decode_loxone_color_to_brightness(color_code):
     blue = (color_code // 1000000) / 100
     green = (color_code // 1000 % 1000) / 100
@@ -100,7 +96,6 @@ def decode_loxone_color_to_rgb(color_code):
     blue *= factor
     # print(red, green, blue)
     return [int(red), int(green), int(blue)]
-    #return [min(int(red * 255), 255), min(int(green * 255), 255), min(int(blue * 255), 255)]
 
 
 def loxone_rgb_format_to_hue_sat(rgb_text):
