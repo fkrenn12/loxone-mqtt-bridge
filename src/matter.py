@@ -1,12 +1,14 @@
-from utils import loxone_rgb_format_to_hue_sat
-from utils import decode_loxone_color_to_rgb, decode_loxone_color_to_brightness, convert_brightness
-
+from utils import decode_loxone_color_to_rgb, decode_loxone_color_to_brightness
+RGB_WHITE = [255, 255, 255]
+COLOR_TEMP_WARM_WHITE = 2900
+DEFAULT_BRIGHTNESS = 125
 services_database = {
     "light": {
         "turn_on": {},
         "turn_off": {},
-        "brightness": lambda value: {"brightness": convert_brightness(value)},
+        "brightness": lambda value: {"brightness": int(value * 2.55), "color_temp_kelvin": 2702},
         "color_temp_kelvin": lambda value: {"color_temp_kelvin": value},
+        "color_temp": lambda value: {"color_temp_kelvin": value},
         "rgb": lambda value: {"rgb_color": decode_loxone_color_to_rgb(value),
                               "brightness": decode_loxone_color_to_brightness(value),
                               },
@@ -16,23 +18,45 @@ services_database = {
     }
 }
 
-service_switch = {"light": {"brightness": "turn_on",
-                            "color_temp_kelvin": "turn_on",
-                            "color": "turn_on",
-                            "rgb": "turn_on"}}
+service_mappings = {"light": {"turn_on": "turn_on",
+                              "turn_off": "turn_off",
+                              "brightness": "turn_on",
+                              "color_temp_kelvin": "turn_on",
+                              "color_temp": "turn_on",
+                              "color": "turn_on",
+                              "rgb": "turn_on"}}
+
+
+def convert_white_to_color_temp(service, service_data):
+    return "turn_on", {"color_temp_kelvin": COLOR_TEMP_WARM_WHITE, "brightness": DEFAULT_BRIGHTNESS}
 
 
 def handle_matter_service(domain, service, value):
     try:
+        if domain == "light" and service in {"rgb", "color"} and decode_loxone_color_to_rgb(value) == RGB_WHITE:
+            return convert_white_to_color_temp(service, {})
         service_data = services_database[domain][service](value)
-        if value >= 100100100:
-            service_data = {"color_temp_kelvin": 2702, "brightness": 125}
-            service = "turn_on"
-    except:
+    except Exception:
         service_data = {}
 
-    service = service_switch.get(domain, {}).get(service, service)
+    service = service_mappings.get(domain, {}).get(service, service)
     return service, service_data
+
+
+'''
+def handle_matter_service(domain, service, value):
+    service_data = {}
+    try:
+        if domain == "light" and (service == "rgb" or service == "color") and decode_loxone_color_to_rgb(value) == [255, 255, 255]:
+            service, service_data = replace_white_with_color_temp(service, service_data)
+        else:
+            service_data = services_database[domain][service](value)
+    except:
+        pass
+
+    service = service_mappings.get(domain, {}).get(service, service)
+    return service, service_data
+'''
 
 
 def compare_states(old_state, new_state):
