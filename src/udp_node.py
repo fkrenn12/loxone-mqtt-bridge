@@ -10,7 +10,6 @@ lock = Lock()
 
 
 def udp_send(data):
-    return
     dest_ip = config.loxone.get(KEY_IP_ADDRESS)
     dest_port = config.loxone.get(KEY_UDP_PORT, UDP_PORT)
     logger.info(f"Sending UDP: {data} to {dest_ip}:{dest_port}")
