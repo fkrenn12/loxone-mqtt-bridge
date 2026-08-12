@@ -1,6 +1,7 @@
 LOXONE_MAX_VAL_BRIGHTNESS = 100
 MATTER_MAX_VAL_BRIGHTNESS = 255
 RGB_WHITE = [255, 255, 255]
+RGB_BLACK = [0, 0, 0]
 COLOR_TEMP_WARM_WHITE_KELVIN = 2900
 COLOR_TEMP_MIN_VALUE_KELVIN = 2800
 COLOR_TEMP_MAX_VALUE_KELVIN = 6500
@@ -78,13 +79,16 @@ def convert_rgbwhite_to_color_temp(service, service_data):
 
 def handle_matter_service(domain, service, value):
     try:
-        if domain == "light" and service in {"rgb", "color"} and loxone_color_code2rgb(value) == RGB_WHITE:
-            return convert_rgbwhite_to_color_temp(service, {})
+        if domain == "light" and service in {"rgb", "color"} and loxone_color_code2rgb(value) == RGB_BLACK:
+            service = None
+            # return convert_rgbwhite_to_color_temp(service, {})
         service_data = services_database[domain][service](value)
     except Exception:
         service_data = {}
-
-    service = service_mappings.get(domain, {}).get(service, service)
+    if service:
+        service = service_mappings.get(domain, {}).get(service, service)
+    else:
+        service = "dummy"
     return service, service_data
 
 
