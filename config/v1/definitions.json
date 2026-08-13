@@ -106,6 +106,42 @@
                     "{topic}/0"
                 ]
             }
+        },
+        {
+            "definition(Zigbee2MQTT)": "LED2005R5/LED2106R3",
+            "description": "TRADFRI bulb GU10",
+            "vendor": "IKEA",
+            "exposes": [],
+            "default_expose": "",
+            "value_mappings": {
+                "color_temp": {
+                    "0": "coolest",
+                    "1": "cool",
+                    "2": "neutral",
+                    "3": "warm",
+                    "4": "warmest"
+                },
+                "state": {
+                    "0": "OFF",
+                    "1": "ON",
+                    "2": "TOGGLE"
+                }
+            },
+            "limits": {
+                "brightness":{
+                    "min": 0,
+                    "max": 254
+                },
+                "color_temp": {
+                    "min": 250,
+                    "max": 454
+                }
+            },
+            "default_value": 0,
+            "default_message_format": [
+                "{topic}/{value}"
+            ],
+            "specific_message_formats": {}
         }
     ]
 }
