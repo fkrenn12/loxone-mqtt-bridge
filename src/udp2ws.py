@@ -3,7 +3,6 @@ from utils import *
 from logger import logger
 from ws_node import ws_client
 from matter import handle_matter_service
-import time
 id_counter = 10
 
 
