@@ -25,6 +25,10 @@ def udp2mqtt(msg: str):
     if device_name == "ping":
         return
 
+    if prop is None:
+        logger.error(f"Cannot process message - missing property: {msg}")
+        return
+
     try:
         device = config.devices.get(device_name)
         topic = device.get("topic", "")
@@ -32,29 +36,13 @@ def udp2mqtt(msg: str):
         logger.error(f"No device {device_name} found.")
         return
 
-    if prop is None:
-        logger.error(f"Cannot process message - missing property: {msg}")
+    try:
+        payload = handle_zigbee_service(device, prop, value)
+    except:
+        logger.error(f"Error handling zigbee device: {device} Property: {prop} Value: {value}")
         return
 
     try:
-        value = handle_zigbee_service(device, prop, value)
-    except:
-        # no valid model definition defined
-        logger.error(f"Error handling zigbee device: {device} Property: {prop} Value: {value}")
-
-    value = cast_to_numeric(value)
-
-    # convert true/True and false/False to boolean
-    if isinstance(value, str):
-        value = {"true": True, "false": False}.get(value.lower(), value)
-
-    try:
-        value = json.loads(value)
-    except:
-        pass
-
-    try:
-        payload = {prop: value}
         json.dumps(payload)  # Verify if payload is serializable to JSON
     except (TypeError, JSONDecodeError) as e:
         logger.error(f"Invalid JSON data: {prop}:{value} - {e}")

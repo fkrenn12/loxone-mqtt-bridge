@@ -1,3 +1,5 @@
+from utils import *
+
 LOXONE_MAX_VAL_BRIGHTNESS = 100
 MATTER_MAX_VAL_BRIGHTNESS = 255
 RGB_WHITE = [255, 255, 255]
@@ -5,41 +7,6 @@ RGB_BLACK = [0, 0, 0]
 COLOR_TEMP_WARM_WHITE_KELVIN = 2900
 COLOR_TEMP_MIN_VALUE_KELVIN = 2800
 COLOR_TEMP_MAX_VALUE_KELVIN = 6500
-
-
-def loxone_color_code_maxvalue(loxone_color_code):
-    red, green, blue = extract_rgb_components(loxone_color_code)
-    return int(max(red, green, blue))
-
-
-def loxone_color_code2rgb(loxone_color_code):
-    red, green, blue = extract_rgb_components(loxone_color_code)
-    max_value = max(red, green, blue)
-    if not max_value:
-        return [0, 0, 0]
-    factor = 255 / max_value
-    red *= factor
-    green *= factor
-    blue *= factor
-    return [int(red), int(green), int(blue)]
-
-
-def loxone_color_temp_percent2color_temp_kelvin(percent):
-    if percent > 0:
-        return int(
-            COLOR_TEMP_MIN_VALUE_KELVIN + (COLOR_TEMP_MAX_VALUE_KELVIN - COLOR_TEMP_MIN_VALUE_KELVIN) * percent / 100)
-    else:
-        return 0
-
-
-def extract_rgb_components(color_code):
-    blue = (color_code // 1000000) / 100
-    green = (color_code // 1000 % 1000) / 100
-    red = (color_code % 1000) / 100
-    blue = min(int(blue * 255), 255)
-    green = min(int(green * 255), 255)
-    red = min(int(red * 255), 255)
-    return red, green, blue
 
 
 def loxone2matter_brightness(brightness):
