@@ -27,7 +27,8 @@ def loxone_color_code2rgb(loxone_color_code):
 
 def loxone_color_temp_percent2color_temp_kelvin(percent):
     if percent > 0:
-        return int(COLOR_TEMP_MIN_VALUE_KELVIN + (COLOR_TEMP_MAX_VALUE_KELVIN - COLOR_TEMP_MIN_VALUE_KELVIN) * percent / 100)
+        return int(
+            COLOR_TEMP_MIN_VALUE_KELVIN + (COLOR_TEMP_MAX_VALUE_KELVIN - COLOR_TEMP_MIN_VALUE_KELVIN) * percent / 100)
     else:
         return 0
 
@@ -79,33 +80,16 @@ def convert_rgbwhite_to_color_temp(service, service_data):
 
 def handle_matter_service(domain, service, value):
     try:
-        if domain == "light" and service in {"rgb", "color"} and loxone_color_code2rgb(value) == RGB_BLACK:
-            service = None
-            # return convert_rgbwhite_to_color_temp(service, {})
+        # we do not handle black rgb value, because in this case color_temp_kelvin will define the light
+        is_black = loxone_color_code2rgb(value) == RGB_BLACK
+        if service in {"rgb", "color"} and domain == "light" and is_black:
+            raise Exception()
         service_data = services_database[domain][service](value)
-    except Exception:
-        service_data = {}
-    if service:
         service = service_mappings.get(domain, {}).get(service, service)
-    else:
-        service = "dummy"
+    except Exception:
+        service = "no-service"
+        service_data = {}
     return service, service_data
-
-
-'''
-def handle_matter_service(domain, service, value):
-    service_data = {}
-    try:
-        if domain == "light" and (service == "rgb" or service == "color") and decode_loxone_color_to_rgb(value) == [255, 255, 255]:
-            service, service_data = replace_white_with_color_temp(service, service_data)
-        else:
-            service_data = services_database[domain][service](value)
-    except:
-        pass
-
-    service = service_mappings.get(domain, {}).get(service, service)
-    return service, service_data
-'''
 
 
 def compare_states(old_state, new_state):
