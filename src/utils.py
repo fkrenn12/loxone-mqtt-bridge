@@ -24,6 +24,14 @@ def save_json_file(file_path: Path, json_dict: dict):
             return False
 
 
+def is_castable_to_numeric(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
 def cast_to_numeric(value):
     if isinstance(value, str):
         try:
@@ -33,15 +41,14 @@ def cast_to_numeric(value):
     return value
 
 
+def scale_and_clamp(value, in_min, in_max, out_min, out_max):
+    value = max(in_min, min(value, in_max))
+    return out_min + (value - in_min) * (out_max - out_min) / (in_max - in_min)
+
+
 def to_boolean(value):
-    """
-    Wandelt den Eingabewert zuverlässig in einen booleschen Wert um.
-    - Unterstützt: "True", "False", "0", "1", 0, 1, True, False.
-    - Unsichere Konvertierungen wie eval() werden umgangen.
-    """
     true_values = {"true", "1", 1, True}
     false_values = {"false", "0", 0, False}
-
     if isinstance(value, str):
         value = value.strip().lower()
     if value in true_values:
@@ -53,9 +60,9 @@ def to_boolean(value):
 
 
 def apply_value_mapping(model: dict, key: str, value: Any):
-    value = str(value).lower()
+    _value = str(value).lower()
     mapping = model["value_mappings"].get(key)
-    return mapping.get(value, value) if mapping else value
+    return mapping.get(_value, value) if mapping else value
 
 
 def get_message_formats(model: dict, key: str):
@@ -64,9 +71,6 @@ def get_message_formats(model: dict, key: str):
     if isinstance(default_format, dict):
         default_format = [default_format]
     return specific_format if specific_format else default_format
-
-
-
 
 
 def loxone_rgb_format_to_hue_sat(rgb_text):

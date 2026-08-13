@@ -4,6 +4,7 @@ from utils import *
 from logger import logger
 from config import config
 from mqtt_node import fast_mqtt
+from zigbee import handle_zigbee_service
 
 
 def udp2mqtt(msg: str):
@@ -31,17 +32,15 @@ def udp2mqtt(msg: str):
         logger.error(f"No device {device_name} found.")
         return
 
+    if prop is None:
+        logger.error(f"Cannot process message - missing property: {msg}")
+        return
+
     try:
-        model_name = device["model_name"]
-        model = next((m for m in config.definitions["definitions"] if m["definition(Zigbee2MQTT)"] == model_name), None)
-        prop = model["default_expose"] if prop is None else prop
-        value = apply_value_mapping(model, prop, value)
+        value = handle_zigbee_service(device, prop, value)
     except:
         # no valid model definition defined
-        logger.error(f"No information found modeling to UDP: {device}")
-        if prop is None:
-            logger.error(f"Cannot process message - missing property: {msg}")
-            return
+        logger.error(f"Error handling zigbee device: {device} Property: {prop} Value: {value}")
 
     value = cast_to_numeric(value)
 
