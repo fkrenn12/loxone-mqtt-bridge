@@ -22,10 +22,10 @@ def udp_send(data):
 
 
 class UDPServerProtocol(asyncio.DatagramProtocol):
-    def __init__(self, receive_callback_mqtt=None, receive_callback_ws=None):
+    def __init__(self, receive_callback_zigbee=None, receive_callback_matter=None):
         self.transport = None
-        self.receive_callback_mqtt = receive_callback_mqtt
-        self.receive_callback_ws = receive_callback_ws
+        self.receive_callback_zigbee = receive_callback_zigbee
+        self.receive_callback_matter = receive_callback_matter
 
     def connection_made(self, transport):
         self.transport = transport
@@ -38,13 +38,13 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
         if len(split) > 1:
             entity_id = split[0]
             # . is splitting entity_id into domain and name
-            # so we use it to decide between zigbee and matter
+            # used to recognize zigbee and matter devices
             if "." in entity_id:
-                if self.receive_callback_ws:
-                    self.receive_callback_ws(message)
+                if self.receive_callback_matter:
+                    self.receive_callback_matter(message)
             else:
-                if self.receive_callback_mqtt:
-                    self.receive_callback_mqtt(message)
+                if self.receive_callback_zigbee:
+                    self.receive_callback_zigbee(message)
         else:
             return
 
