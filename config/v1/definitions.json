@@ -129,12 +129,16 @@
             },
             "limits": {
                 "brightness":{
-                    "min": 0,
-                    "max": 254
+                    "in_min": 0,
+                    "in_max": 100,
+                    "out_min": 0,
+                    "out_max": 254
                 },
                 "color_temp": {
-                    "min": 250,
-                    "max": 454
+                    "in_min": 0,
+                    "in_max": 100,
+                    "out_min": 250,
+                    "out_max": 454
                 }
             },
             "default_value": 0,
