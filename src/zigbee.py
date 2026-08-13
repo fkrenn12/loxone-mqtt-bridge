@@ -12,10 +12,10 @@ services_database = {
         "state": lambda value: {"state": value},
         "brightness": lambda value: {"brightness": value},
         "color_temp": lambda value: {"color_temp": value},
-        "rgb": lambda value: {"color": loxone_color_code2rgb(loxone_color_code=value),
+        "rgb": lambda value: {"color": {"rgb": ",".join(map(str, loxone_color_code2rgb(loxone_color_code=value)))},
                               "brightness": loxone_color_code_maxvalue(loxone_color_code=value),
                               },
-        "color": lambda value: {"color": loxone_color_code2rgb(loxone_color_code=value),
+        "color": lambda value: {"color": {"rgb": ",".join(map(str, loxone_color_code2rgb(loxone_color_code=value)))},
                                 "brightness": loxone_color_code_maxvalue(loxone_color_code=value),
                                 }
 }
