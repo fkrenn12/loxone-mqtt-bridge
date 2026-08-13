@@ -5,7 +5,6 @@ RGB_BLACK = [0, 0, 0]
 COLOR_TEMP_WARM_WHITE_KELVIN = 2900
 COLOR_TEMP_MIN_VALUE_KELVIN = 2800
 COLOR_TEMP_MAX_VALUE_KELVIN = 6500
-DEFAULT_BRIGHTNESS = 125
 
 
 def loxone_color_code_maxvalue(loxone_color_code):
@@ -72,10 +71,6 @@ service_mappings = {"light": {"turn_on": "turn_on",
                               "color_temp_percent": "turn_on",
                               "color": "turn_on",
                               "rgb": "turn_on"}}
-
-
-def convert_rgbwhite_to_color_temp(service, service_data):
-    return "turn_on", {"color_temp_kelvin": COLOR_TEMP_WARM_WHITE_KELVIN, "brightness": DEFAULT_BRIGHTNESS}
 
 
 def handle_matter_service(domain, service, value):
