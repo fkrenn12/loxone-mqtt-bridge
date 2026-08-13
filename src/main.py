@@ -45,7 +45,7 @@ async def _lifespan(_app: FastAPI):
 async def start_udp_server():
     try:
         await asyncio.get_event_loop().create_datagram_endpoint(
-            lambda: UDPServerProtocol(udp2mqtt, udp2ws),
+            lambda: UDPServerProtocol(receive_callback_zigbee=udp2mqtt, receive_callback_matter=udp2ws),
             local_addr=("0.0.0.0", config.loxone.get(KEY_UDP_PORT, UDP_PORT)),
         )
         logger.info("✅ UDP server started successfully.")
