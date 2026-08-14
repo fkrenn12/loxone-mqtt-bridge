@@ -62,6 +62,21 @@ def to_boolean(value):
         raise ValueError(f"Invalid value: {value}")
 
 
+def normalize_to_list(input_str):
+    try:
+        # Replace round brackets with square brackets and clean the string
+        cleaned = input_str.replace('(', '[').replace(')', ']').strip()
+        # Safely evaluate the cleaned string as a Python list
+        normalized_list = eval(cleaned)
+        # Ensure the result is a list
+        if isinstance(normalized_list, list):
+            return normalized_list
+        else:
+            raise ValueError("Input could not be converted to a list.")
+    except Exception as e:
+        raise ValueError(f"Invalid input: {input_str}. Error: {e}")
+
+
 def apply_value_mapping(model: dict, key: str, value: Any):
     _value = str(value).lower()
     mapping = model["value_mappings"].get(key)

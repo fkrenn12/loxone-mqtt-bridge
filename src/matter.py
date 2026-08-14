@@ -1,4 +1,6 @@
 from utils import *
+from pydantic.color import COLORS_BY_NAME
+from constants import *
 
 LOXONE_MAX_VAL_BRIGHTNESS = 100
 MATTER_MAX_VAL_BRIGHTNESS = 255
@@ -26,7 +28,10 @@ services_database = {
                               },
         "color": lambda value: {"rgb_color": loxone_color_code2rgb(loxone_color_code=value),
                                 "brightness": loxone_color_code_maxvalue(loxone_color_code=value),
-                                }
+                                },
+        "color_by_name": lambda value: {"rgb_color": value,
+                                        "brightness": min(max(value), MATTER_MAX_VAL_BRIGHTNESS)
+                                        },
     }
 }
 
@@ -43,9 +48,10 @@ service_mappings = {"light": {"turn_on": "turn_on",
 def handle_matter_service(domain, service, value):
     try:
         # we do not handle black rgb value, because in this case color_temp_kelvin will define the light
-        is_black = loxone_color_code2rgb(value) == RGB_BLACK
-        if service in {"rgb", "color"} and domain == "light" and is_black:
-            raise Exception()
+        if service in {"rgb", "color"} and domain == "light":
+            if loxone_color_code2rgb(value) == RGB_BLACK:
+                raise Exception()
+
         service_data = services_database[domain][service](value)
         service = service_mappings.get(domain, {}).get(service, service)
     except Exception:
