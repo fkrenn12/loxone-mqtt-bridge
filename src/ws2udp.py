@@ -8,11 +8,16 @@ lock = asyncio.Lock()
 
 async def ws_event_callback(event):
     if event and "event" in event:
-        entity_id = event["event"]["data"]["new_state"]["entity_id"]
-        # print(f"entity_id: {entity_id}")
-        event_data = event["event"]["data"]
-        # print("old", event_data["old_state"])
-        # print("new", event_data["new_state"])
+        try:
+            event_data = event["event"]["data"]
+            entity_id = event_data["new_state"]["entity_id"]
+            # print(f"entity_id: {entity_id}")
+            # print("old", event_data["old_state"])
+            # print("new", event_data["new_state"])
+        except Exception as e:
+            logger.error(f"Error WS event data not processable: {e}")
+            return
+
         changed_states = compare_states(event_data["old_state"], event_data["new_state"])
         logger.info(f"📨 WS Event state changed: {entity_id} - {changed_states}")
         send = []
