@@ -184,12 +184,7 @@
             "default_message_format": [
                 "{topic}/{value}"
             ],
-            "specific_message_formats": {
-                "color": [
-                    "{topic}/{value}",
-                    "{topic}/{value}"
-                ]
-            }
+            "specific_message_formats": {}
         }
     ]
 }
