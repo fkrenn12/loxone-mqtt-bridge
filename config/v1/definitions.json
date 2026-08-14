@@ -146,6 +146,45 @@
                 "{topic}/{value}"
             ],
             "specific_message_formats": {}
+        },
+        {
+            "definition(Zigbee2MQTT)": "900024/12253",
+            "description": "EGLO_ZM_RGB_TW",
+            "vendor": "EGLO",
+            "exposes": [],
+            "default_expose": "",
+            "value_mappings": {
+                "color_temp": {
+                    "0": "coolest",
+                    "1": "cool",
+                    "2": "neutral",
+                    "3": "warmest"
+                },
+                "state": {
+                    "0": "OFF",
+                    "1": "ON",
+                    "2": "TOGGLE"
+                }
+            },
+            "limits": {
+                "brightness":{
+                    "in_min": 0,
+                    "in_max": 100,
+                    "out_min": 0,
+                    "out_max": 254
+                },
+                "color_temp": {
+                    "in_min": 0,
+                    "in_max": 100,
+                    "out_min": 153,
+                    "out_max": 370
+                }
+            },
+            "default_value": 0,
+            "default_message_format": [
+                "{topic}/{value}"
+            ],
+            "specific_message_formats": {}
         }
     ]
 }
