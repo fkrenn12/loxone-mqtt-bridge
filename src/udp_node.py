@@ -5,8 +5,38 @@ import socket
 from config import config, UDP_PORT
 from threading import Lock
 import time
+from utils import *
 from datetime import datetime
+
 lock = Lock()
+
+SERVICES = ["rgb", "color", "brightness", "color_temp", "color_temp_kelvin", "color_temp_percent", "turn_on",
+            "turn_off", "state"]
+
+
+def limit_to_percent(value):
+    return min(max(value, 0), 100)
+
+
+def validate_and_normalize(domain, service, value, is_matter):
+    # validate service
+    if service not in SERVICES:
+        return None, None
+    # validate value
+    try:
+        value = json.loads(value)
+    except:
+        pass
+    value = cast_to_numeric(value)  # converts to numeric if possible
+    if value is not None:
+        if service == "brightness" or service == "color_temp_percent":
+            value = limit_to_percent(value)
+        if service == "color_temp_kelvin":
+            value = min(max(value, 1000), 10000)
+        if service == "color_temp":
+            value = min(max(value, 100), 1000)
+
+
 
 
 def udp_send(data):
@@ -37,9 +67,14 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
         split = message.split("/")
         if len(split) > 1:
             entity_id = split[0]
+            service = split[1]
+            value = split[2] if len(split) > 2 else None
+            is_matter = "." in entity_id
+            domain = entity_id.split(".")[0] if is_matter else None
+            service, value = validate_and_normalize(domain, service, value, is_matter)
             # . is splitting entity_id into domain and name
             # used to recognize zigbee and matter devices
-            if "." in entity_id:
+            if is_matter:
                 if self.receive_callback_matter:
                     self.receive_callback_matter(message)
             else:
@@ -63,4 +98,3 @@ async def udp_broadcast_loop(ip, port, message, interval):
         except Exception as e:
             logger.error(f"Error UDP broadcasting: {e}")
         await asyncio.sleep(interval)
-
