@@ -8,10 +8,15 @@ LOXONE_MAX_VAL_BRIGHTNESS = 100
 RGB_WHITE = [255, 255, 255]
 RGB_BLACK = [0, 0, 0]
 
+
+def convert2onoff(value):
+    return "ON" if value else "OFF"
+
+
 services_database = {
-    "turn_on":  {"state": True},
-    "turn_off": {"state": False},
-    "state": lambda value: {"state": value},
+    "turn_on": lambda value: {"state": "ON"},
+    "turn_off": lambda value: {"state": "OFF"},
+    "state": lambda value: {"state": convert2onoff(value)},
     "brightness": lambda value: {"brightness": min(int(value * 2.54), 254)},
     "color_temp": lambda value: {"color_temp": convert_color_temp2mired(value)},
     "color": lambda value: {"color": {"rgb": ",".join(map(str, value))},
