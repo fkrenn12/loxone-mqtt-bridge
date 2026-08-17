@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 from typing import Any
 
-COLOR_TEMP_MIN_VALUE_KELVIN = 2800
+COLOR_TEMP_MIN_VALUE_KELVIN = 2702
 COLOR_TEMP_MAX_VALUE_KELVIN = 6500
 
 
@@ -62,7 +62,8 @@ def to_boolean(value):
         raise ValueError(f"Invalid value: {value}")
 
 
-def normalize_to_list(input_str):
+def normalize_to_list(value: Any):
+    input_str = str(value)
     try:
         # Replace round brackets with square brackets and clean the string
         cleaned = input_str.replace('(', '[').replace(')', ']').strip()
@@ -131,6 +132,28 @@ def loxone_color_temp_percent2color_temp_kelvin(percent):
     if percent > 0:
         return int(
             COLOR_TEMP_MIN_VALUE_KELVIN + (COLOR_TEMP_MAX_VALUE_KELVIN - COLOR_TEMP_MIN_VALUE_KELVIN) * percent / 100)
+    else:
+        return 0
+
+
+def convert_color_temp2kelvin(value):
+    if 0 <= value <= 100:
+        # percent
+        return int(COLOR_TEMP_MIN_VALUE_KELVIN + (COLOR_TEMP_MAX_VALUE_KELVIN - COLOR_TEMP_MIN_VALUE_KELVIN) * value / 100)
+    elif 101 <= value <= 999:
+        # mired
+        return min(max(int(1000000 / value), COLOR_TEMP_MIN_VALUE_KELVIN), COLOR_TEMP_MAX_VALUE_KELVIN)
+    elif 1000 <= value <= 10000:
+        # kelvin
+        return min(max(value, COLOR_TEMP_MIN_VALUE_KELVIN), COLOR_TEMP_MAX_VALUE_KELVIN)
+    else:
+        return 0
+
+
+def convert_color_temp2mired(value):
+    value = convert_color_temp2kelvin(value)
+    if value > 0:
+        return int(1000000 / value)
     else:
         return 0
 

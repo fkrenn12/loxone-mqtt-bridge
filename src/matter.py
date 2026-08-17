@@ -15,46 +15,38 @@ def loxone2matter_brightness(brightness):
     return int((brightness * MATTER_MAX_VAL_BRIGHTNESS) / LOXONE_MAX_VAL_BRIGHTNESS)
 
 
+def convert2turnonoff(value):
+    return "turn_on" if value else "turn_off"
+
+
 services_database = {
     "light": {
-        "turn_on": {},
-        "turn_off": {},
-        "brightness": lambda value: {"brightness": loxone2matter_brightness(value)},
-        "color_temp_kelvin": lambda value: {"color_temp_kelvin": value},
-        "color_temp": lambda value: {"color_temp_kelvin": value},
-        "color_temp_percent": lambda value: {"color_temp_kelvin": loxone_color_temp_percent2color_temp_kelvin(value)},
-        "rgb": lambda value: {"rgb_color": loxone_color_code2rgb(loxone_color_code=value),
-                              "brightness": loxone_color_code_maxvalue(loxone_color_code=value),
-                              },
-        "color": lambda value: {"rgb_color": loxone_color_code2rgb(loxone_color_code=value),
-                                "brightness": loxone_color_code_maxvalue(loxone_color_code=value),
-                                },
-        "color_by_name": lambda value: {"rgb_color": value,
-                                        "brightness": min(max(value), MATTER_MAX_VAL_BRIGHTNESS)
-                                        },
+        "turn_on": lambda value: {},
+        "turn_off": lambda value: {},
+        "state": lambda value: {},
+        "brightness": lambda value: {"brightness": int(value * 2.55)},
+        "color_temp": lambda value: {"color_temp_kelvin": convert_color_temp2kelvin(value)},
+        "color": lambda value: {"rgb_color": value,
+                                "brightness": max(value),
+                                }
     }
 }
 
-service_mappings = {"light": {"turn_on": "turn_on",
-                              "turn_off": "turn_off",
-                              "brightness": "turn_on",
-                              "color_temp_kelvin": "turn_on",
-                              "color_temp": "turn_on",
-                              "color_temp_percent": "turn_on",
-                              "color": "turn_on",
-                              "rgb": "turn_on"}}
+service_mappings = {"light": {"turn_on": lambda value: "turn_on",
+                              "turn_off": lambda value: "turn_off",
+                              "state": lambda value: convert2turnonoff(value),
+                              "brightness": lambda value: "turn_on",
+                              "color_temp": lambda value: "turn_on",
+                              "color": lambda value: "turn_on"}}
 
 
 def handle_matter_service(domain, service, value):
     try:
-        # we do not handle black rgb value, because in this case color_temp_kelvin will define the light
-        if service in {"rgb", "color"} and domain == "light":
-            if loxone_color_code2rgb(value) == RGB_BLACK:
-                raise Exception()
-
         service_data = services_database[domain][service](value)
-        service = service_mappings.get(domain, {}).get(service, service)
-    except Exception:
+        # service = service_mappings.get(domain, {}).get(service, None)
+        if service:
+            service = service_mappings[domain][service](value)
+    except Exception as e:
         service = "no-service"
         service_data = {}
     return service, service_data

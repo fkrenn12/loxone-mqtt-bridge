@@ -7,7 +7,30 @@ from mqtt_node import fast_mqtt
 from zigbee import handle_zigbee_service
 
 
-def udp2mqtt(msg: str):
+def udp2mqtt(device, service, service_data):
+    try:
+        device = config.devices.get(device)
+        topic = device.get("topic", "")
+    except:
+        logger.error(f"No device {device} found.")
+        return
+
+    try:
+        json.dumps(service_data)  # Verify if payload is serializable to JSON
+    except (TypeError, JSONDecodeError) as e:
+        logger.error(f"Invalid JSON data: {service_data} - {e}")
+        return
+
+    if topic:
+        topic = f"{topic}/set"
+        logger.info(f"Publishing MQTT: {topic} {service_data}")
+        try:
+            fast_mqtt.publish(topic, service_data, qos=1)
+        except:
+            logger.error(f"Error publishing MQTT: {topic} {service_data}")
+
+
+def udp2mqtt_old(msg: str):
     # logger.info(f"Received UDP: {msg}")
     splitted = msg.split("/")
     if len(splitted) == 2:

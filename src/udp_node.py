@@ -5,20 +5,110 @@ import socket
 from config import config, UDP_PORT
 from threading import Lock
 import time
+
+from matter import handle_matter_service
+from zigbee import handle_zigbee_service
 from utils import *
 from datetime import datetime
+from pydantic.color import COLORS_BY_NAME
 
 lock = Lock()
 
-SERVICES = ["rgb", "color", "brightness", "color_temp", "color_temp_kelvin", "color_temp_percent", "turn_on",
-            "turn_off", "state"]
+SERVICES = ["color", "brightness", "color_temp", "turn_on", "turn_off", "state"]
 
 
 def limit_to_percent(value):
     return min(max(value, 0), 100)
 
 
-def validate_and_normalize(domain, service, value, is_matter):
+def validate_and_normalize(domain: str, service: str, value: str, is_matter: bool) -> tuple:
+    """
+    Validates the service and normalizes the value based on the service type.
+
+    :param domain: The device domain (e.g., "zigbee" or "matter").
+    :param service: The requested service (e.g., "brightness", "color").
+    :param value: The input value.
+    :param is_matter: Boolean indicating if the device is Matter.
+    :return: A tuple (service, normalized_value) or (None, None) if validation fails.
+    """
+    if service not in SERVICES:
+        logger.warning(f"Unknown service: {service}")
+        return None, None
+
+    # Attempt to parse the value
+    parsed_value = _parse_value(value)
+    if parsed_value is None:
+        return None, None
+
+    # Normalize the value based on the service type
+    return service, _normalize_value(service, parsed_value)
+
+
+def _parse_value(value: str) -> any:
+    """Attempts to parse the value and cast to numeric if applicable."""
+    try:
+        value = json.loads(value)
+    except (ValueError, TypeError):
+        pass  # Ignore if value is not JSON
+
+    try:
+        return cast_to_numeric(value)  # Attempt to cast to numeric
+    except Exception as e:
+        logger.error(f"Failed parsing value: {value}. Error: {e}")
+        return None
+
+
+def _normalize_value(service: str, value: any) -> any:
+    """Normalizes the value based on the specified service."""
+    service_handlers = {
+        "brightness": lambda val: limit_to_percent(val) if isinstance(val, int) else None,
+        "state": lambda val: int(bool(val)),
+        "color_temp": lambda val: val if isinstance(val, int) else None,
+        "color": lambda val: _normalize_color(val),
+    }
+    handler = service_handlers.get(service)
+    if not handler:
+        logger.warning(f"Unsupported service: {service}")
+        return None
+    value = handler(value)
+
+    # we do not handle black rgb value, because in this case color_temp  will define the light
+    if service == "color" and value == [0, 0, 0]:
+        return None
+
+    return value
+
+
+def _normalize_color(value: any) -> list | None:
+    """Normalizes color information (HEX, RGB, or color names)."""
+    if isinstance(value, int):
+        # Convert Loxone color code to RGB
+        try:
+            return list(extract_rgb_components(value))
+        except Exception as e:
+            logger.error(f"Failed to extract RGB from color code '{value}': {e}")
+            return None
+
+    if isinstance(value, str):
+        # Check for color names in known dictionaries
+        try:
+            # Retrieve color from known dictionaries or normalize as a list
+            rgb = COLORS_BY_NAME.get(value) or COLORS_BY_NAME_DE.get(value)
+            if rgb:
+                return normalize_to_list(rgb)
+        except Exception as e:
+            logger.error(f"Error processing string color '{value}': {e}")
+            return None
+
+    # If the input is a list or tuple
+    try:
+        return normalize_to_list(value)
+    except Exception as e:
+        logger.error(f"Error normalizing color value: {value}. Error: {e}")
+        return None
+
+
+def validate_and_normalize_old(domain, service, value, is_matter):
     # validate service
     if service not in SERVICES:
         return None, None
@@ -29,14 +119,36 @@ def validate_and_normalize(domain, service, value, is_matter):
         pass
     value = cast_to_numeric(value)  # converts to numeric if possible
     if value is not None:
-        if service == "brightness" or service == "color_temp_percent":
-            value = limit_to_percent(value)
-        if service == "color_temp_kelvin":
-            value = min(max(value, 1000), 10000)
-        if service == "color_temp":
-            value = min(max(value, 100), 1000)
+        if service == "brightness":
+            value = limit_to_percent(value) if isinstance(value, int) else None
+        elif service == "state":
+            value = int(bool(value))
+        elif service == "color_temp":
+            value = value if isinstance(value, int) else None
+        elif service == "color":
+            if isinstance(value, int):
+                # loxone color code
+                try:
+                    red, green, blue = extract_rgb_components(value)
+                    value = [red, green, blue]
+                except:
+                    value = None
+            else:
+                # is string color as text or list or tuple
+                try:
+                    if value in COLORS_BY_NAME:
+                        value = COLORS_BY_NAME[value]
+                    elif value in COLORS_BY_NAME_DE:
+                        value = COLORS_BY_NAME_DE[value]
+                    value = normalize_to_list(value)
+                except:
+                    # color as list or tuple
+                    try:
+                        value = normalize_to_list(value)
+                    except:
+                        value = None
 
-
+    return service, value
 
 
 def udp_send(data):
@@ -65,23 +177,21 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
         message = data.decode('utf-8')
         logger.info(f"Received UDP: {message} from {addr}")
         split = message.split("/")
-        if len(split) > 1:
-            entity_id = split[0]
-            service = split[1]
-            value = split[2] if len(split) > 2 else None
-            is_matter = "." in entity_id
-            domain = entity_id.split(".")[0] if is_matter else None
-            service, value = validate_and_normalize(domain, service, value, is_matter)
-            # . is splitting entity_id into domain and name
-            # used to recognize zigbee and matter devices
-            if is_matter:
-                if self.receive_callback_matter:
-                    self.receive_callback_matter(message)
-            else:
-                if self.receive_callback_zigbee:
-                    self.receive_callback_zigbee(message)
-        else:
+        if len(split) <= 1:
             return
+        device = split[0]
+        service = split[1]
+        value = split[2] if len(split) > 2 else None
+        is_matter = "." in device
+        domain = device.split(".")[0] if is_matter else None
+        entity_id = device if is_matter else None
+        service, value = validate_and_normalize(domain, service, value, is_matter)
+        if service and value is not None and is_matter and self.receive_callback_matter:
+            service, service_data = handle_matter_service(domain, service, value)
+            self.receive_callback_matter(domain, entity_id, service, service_data)
+        elif service and value is not None and not is_matter and self.receive_callback_zigbee:
+            service, service_data = handle_zigbee_service(device, service, value)
+            self.receive_callback_zigbee(device, service, service_data)
 
     def connection_lost(self, exc):
         logger.error("UDP server connection closed")
