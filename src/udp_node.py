@@ -181,6 +181,8 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
             return
         device = split[0]
         service = split[1]
+        if service == "ping":
+            return
         value = split[2] if len(split) > 2 else None
         is_matter = "." in device
         domain = device.split(".")[0] if is_matter else None
