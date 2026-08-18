@@ -20,8 +20,8 @@ services_database = {
         "turn_on": lambda value: {"service": "turn_on", "service_data": {}},
         "turn_off": lambda value: {"service": "turn_off", "service_data": {}},
         "state": lambda value: {"service": "turn_on" if to_boolean(value) else "turn_off", "service_data": {}},
-        "brightness": lambda value: {"service": "turn_on", "service_data": {"brightness": int(value * 2.55)}},
-        "color_temp": lambda value: {"service": "turn_on" if value > 0 else "no-service",
+        "brightness": lambda value: {"service": "turn_on", "service_data": {"brightness": min(int(value * 2.55), 255)}},
+        "color_temp": lambda value: {"service": "turn_on",
                                      "service_data": {"color_temp_kelvin": convert_color_temp2kelvin(value)}},
         "color": lambda value: {"service": "turn_on", "service_data": {"rgb_color": value, "brightness": max(value)}}
     }
