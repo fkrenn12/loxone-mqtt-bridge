@@ -13,7 +13,7 @@ services_database = {
     "turn_off": lambda value: {"service": "state", "service_data": {"state": "OFF"}},
     "state": lambda value: {"service": "state", "service_data": {"state": "ON" if to_boolean(value) else "OFF"}},
     "brightness": lambda value: {"service": "brightness", "service_data": {"brightness": min(int(value * 2.54), 254)}},
-    "color_temp": lambda value: {"service": "color_temp" if value > 0 else "no-service",
+    "color_temp": lambda value: {"service": "color_temp",
                                  "service_data": {"color_temp": convert_color_temp2mired(value)}},
     "color": lambda value: {"service": "color",
                             "service_data": {"color": {"rgb": ",".join(map(str, value))},
@@ -27,18 +27,8 @@ def handle_zigbee_service(device, service, value):
     model_name = device["model_name"]
     model = next((m for m in config.definitions["definitions"] if m["definition(Zigbee2MQTT)"] == model_name), None)
     service = model["default_expose"] if service is None else service
-    # service limits and scaling
-    if model:
-        limits = model.get("limits", {})
-        if service in limits and is_castable_to_numeric(value):
-            in_min = limits[service].get("in_min", 0)
-            in_max = limits[service].get("in_max", 100)
-            out_min = limits[service].get("out_min", 0)
-            out_max = limits[service].get("out_max", 100)
-            # if service != "brightness":
-            #    value = int(scale_and_clamp(int(value), in_min, in_max, out_min, out_max))
-
-        value = apply_value_mapping(model, service, value)
+    # mapping
+    value = apply_value_mapping(model, service, value) if model else value
 
     # convert true/True and false/False to boolean
     if isinstance(value, str):
@@ -50,6 +40,18 @@ def handle_zigbee_service(device, service, value):
 
     try:
         res = services_database[service](value)
-        return res.get("service", service), res.get("service_data", {})
+        service = res.get("service", service)
+        # service limits and scaling
+        if model:
+            limits = model.get("limits", {})
+            if service in limits and is_castable_to_numeric(value):
+                out_min = limits[service].get("out_min", 0)
+                out_max = limits[service].get("out_max", 100)
+                in_min = limits[service].get("in_min", out_min)
+                in_max = limits[service].get("in_max", out_max)
+                value = res.get("service_data", {}).get(service, value)
+                value = int(scale_and_clamp(int(value), in_min, in_max, out_min, out_max))
+                res["service_data"][service] = value
+        return service, res.get("service_data", {})
     except Exception as e:
         return service, {}
