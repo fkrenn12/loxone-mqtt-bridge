@@ -79,6 +79,10 @@ def _normalize_value(service: str, value: any) -> any:
     if service == "color" and value == [0, 0, 0]:
         return None
 
+    # we do not handle color_temp=0, color_temp starts with 1
+    if service == "color_temp" and value == 0:
+        return None
+
     return value
 
 
