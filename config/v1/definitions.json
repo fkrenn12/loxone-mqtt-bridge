@@ -153,19 +153,7 @@
             "vendor": "EGLO",
             "exposes": [],
             "default_expose": "",
-            "value_mappings": {
-                "color_temp": {
-                    "0": "coolest",
-                    "1": "cool",
-                    "2": "neutral",
-                    "3": "warmest"
-                },
-                "state": {
-                    "0": "OFF",
-                    "1": "ON",
-                    "2": "TOGGLE"
-                }
-            },
+            "value_mappings": {},
             "limits": {
                 "brightness":{
                     "in_min": 0,
