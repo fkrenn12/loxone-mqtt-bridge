@@ -41,7 +41,8 @@ def validate_and_normalize(domain: str, service: str, value: str, is_matter: boo
         return service, None
 
     # Normalize the value based on the service type
-    return service, _normalize_value(service, parsed_value)
+    service, value = _normalize_value(service, parsed_value)
+    return service, value
 
 
 def _parse_value(value: str) -> any:
@@ -63,27 +64,27 @@ def _parse_value(value: str) -> any:
 
 def _normalize_value(service: str, value: any) -> any:
     """Normalizes the value based on the specified service."""
-    service_handlers = {
-        "brightness": lambda val: limit_to_percent(val) if isinstance(val, int) else None,
+    handler = {
+        "brightness": lambda val: limit_to_percent(val) if isinstance(val, int) else 0,
         "state": lambda val: int(bool(val)),
-        "color_temp": lambda val: val if isinstance(val, int) else None,
+        "color_temp": lambda val: val if isinstance(val, int) else 0,
         "color": lambda val: _normalize_color(val),
-    }
-    handler = service_handlers.get(service)
+    }.get(service)
+
     if not handler:
         logger.warning(f"Unsupported service: {service}")
-        return None
+        return None, None
     value = handler(value)
 
     # we do not handle black rgb value, because in this case color_temp  will define the light
     if service == "color" and value == [0, 0, 0]:
-        return None
+        return None, None
 
     # we do not handle color_temp=0, color_temp starts with 1
     if service == "color_temp" and value == 0:
-        return None
+        return None, None
 
-    return value
+    return service, value
 
 
 def _normalize_color(value: any) -> list | None:
@@ -113,49 +114,6 @@ def _normalize_color(value: any) -> list | None:
     except Exception as e:
         logger.error(f"Error normalizing color value: {value}. Error: {e}")
         return None
-
-
-def validate_and_normalize_old(domain, service, value, is_matter):
-    # validate service
-    if service not in SERVICES:
-        return None, None
-    # validate value
-    try:
-        value = json.loads(value)
-    except:
-        pass
-    value = cast_to_numeric(value)  # converts to numeric if possible
-    if value is not None:
-        if service == "brightness":
-            value = limit_to_percent(value) if isinstance(value, int) else None
-        elif service == "state":
-            value = int(bool(value))
-        elif service == "color_temp":
-            value = value if isinstance(value, int) else None
-        elif service == "color":
-            if isinstance(value, int):
-                # loxone color code
-                try:
-                    red, green, blue = extract_rgb_components(value)
-                    value = [red, green, blue]
-                except:
-                    value = None
-            else:
-                # is string color as text or list or tuple
-                try:
-                    if value in COLORS_BY_NAME:
-                        value = COLORS_BY_NAME[value]
-                    elif value in COLORS_BY_NAME_DE:
-                        value = COLORS_BY_NAME_DE[value]
-                    value = normalize_to_list(value)
-                except:
-                    # color as list or tuple
-                    try:
-                        value = normalize_to_list(value)
-                    except:
-                        value = None
-
-    return service, value
 
 
 def udp_send(data):
