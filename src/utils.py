@@ -50,8 +50,8 @@ def scale_and_clamp(value, in_min, in_max, out_min, out_max):
 
 
 def to_boolean(value):
-    true_values = {"true", "1", 1, True}
-    false_values = {"false", "0", 0, False}
+    true_values = {"on", "true", "1", 1, True}
+    false_values = {"off", "false", "0", 0, False}
     if isinstance(value, str):
         value = value.strip().lower()
     if value in true_values:

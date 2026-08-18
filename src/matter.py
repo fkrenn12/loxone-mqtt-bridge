@@ -15,41 +15,25 @@ def loxone2matter_brightness(brightness):
     return int((brightness * MATTER_MAX_VAL_BRIGHTNESS) / LOXONE_MAX_VAL_BRIGHTNESS)
 
 
-def convert2turnonoff(value):
-    return "turn_on" if value else "turn_off"
-
-
 services_database = {
     "light": {
-        "turn_on": lambda value: {},
-        "turn_off": lambda value: {},
-        "state": lambda value: {},
-        "brightness": lambda value: {"brightness": int(value * 2.55)},
-        "color_temp": lambda value: {"color_temp_kelvin": convert_color_temp2kelvin(value)},
-        "color": lambda value: {"rgb_color": value,
-                                "brightness": max(value),
-                                }
+        "turn_on": lambda value: {"service": "turn_on", "service_data": {}},
+        "turn_off": lambda value: {"service": "turn_off", "service_data": {}},
+        "state": lambda value: {"service": "turn_on" if to_boolean(value) else "turn_off", "service_data": {}},
+        "brightness": lambda value: {"service": "turn_on", "service_data": {"brightness": int(value * 2.55)}},
+        "color_temp": lambda value: {"service": "turn_on",
+                                     "service_data": {"color_temp_kelvin": convert_color_temp2kelvin(value)}},
+        "color": lambda value: {"service": "turn_on", "service_data": {"rgb_color": value, "brightness": max(value)}}
     }
 }
-
-service_mappings = {"light": {"turn_on": lambda value: "turn_on",
-                              "turn_off": lambda value: "turn_off",
-                              "state": lambda value: convert2turnonoff(value),
-                              "brightness": lambda value: "turn_on",
-                              "color_temp": lambda value: "turn_on",
-                              "color": lambda value: "turn_on"}}
 
 
 def handle_matter_service(domain, service, value):
     try:
-        service_data = services_database[domain][service](value)
-        # service = service_mappings.get(domain, {}).get(service, None)
-        if service:
-            service = service_mappings[domain][service](value)
+        res = services_database[domain][service](value)
+        return res.get("service", service), res.get("service_data", {})
     except Exception as e:
-        service = "no-service"
-        service_data = {}
-    return service, service_data
+        return "no-service", {}
 
 
 def compare_states(old_state, new_state):

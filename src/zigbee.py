@@ -8,20 +8,17 @@ LOXONE_MAX_VAL_BRIGHTNESS = 100
 RGB_WHITE = [255, 255, 255]
 RGB_BLACK = [0, 0, 0]
 
-
-def convert2onoff(value):
-    return "ON" if value else "OFF"
-
-
 services_database = {
-    "turn_on": lambda value: {"state": "ON"},
-    "turn_off": lambda value: {"state": "OFF"},
-    "state": lambda value: {"state": convert2onoff(value)},
-    "brightness": lambda value: {"brightness": min(int(value * 2.54), 254)},
-    "color_temp": lambda value: {"color_temp": convert_color_temp2mired(value)},
-    "color": lambda value: {"color": {"rgb": ",".join(map(str, value))},
-                            "brightness": min(max(value), 254)
-                            }
+    "turn_on": lambda value: {"service": "state", "service_data": {"state": "ON"}},
+    "turn_off": lambda value: {"service": "state", "service_data": {"state": "OFF"}},
+    "state": lambda value: {"service": "state", "service_data": {"state": "ON" if to_boolean(value) else "OFF"}},
+    "brightness": lambda value: {"service": "brightness", "service_data": {"brightness": min(int(value * 2.54), 254)}},
+    "color_temp": lambda value: {"service": "color_temp",
+                                 "service_data": {"color_temp": convert_color_temp2mired(value)}},
+    "color": lambda value: {"service": "color",
+                            "service_data": {"color": {"rgb": ",".join(map(str, value))},
+                                             "brightness": min(max(value), 254)
+                                             }}
 }
 
 
@@ -52,8 +49,7 @@ def handle_zigbee_service(device, service, value):
         pass
 
     try:
-        x = services_database[service](value)
-        # print(x)
-        return service, x
+        res = services_database[service](value)
+        return res.get("service", service), res.get("service_data", {})
     except Exception as e:
         return service, {}

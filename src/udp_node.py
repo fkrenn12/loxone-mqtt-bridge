@@ -38,7 +38,7 @@ def validate_and_normalize(domain: str, service: str, value: str, is_matter: boo
     # Attempt to parse the value
     parsed_value = _parse_value(value)
     if parsed_value is None:
-        return None, None
+        return service, None
 
     # Normalize the value based on the service type
     return service, _normalize_value(service, parsed_value)
@@ -46,9 +46,12 @@ def validate_and_normalize(domain: str, service: str, value: str, is_matter: boo
 
 def _parse_value(value: str) -> any:
     """Attempts to parse the value and cast to numeric if applicable."""
+    if value is None:
+        return None
+
     try:
         value = json.loads(value)
-    except (ValueError, TypeError):
+    except Exception:
         pass  # Ignore if value is not JSON
 
     try:
@@ -188,10 +191,10 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
         domain = device.split(".")[0] if is_matter else None
         entity_id = device if is_matter else None
         service, value = validate_and_normalize(domain, service, value, is_matter)
-        if service and value is not None and is_matter and self.receive_callback_matter:
+        if service is not None and is_matter and self.receive_callback_matter:
             service, service_data = handle_matter_service(domain, service, value)
             self.receive_callback_matter(domain, entity_id, service, service_data)
-        elif service and value is not None and not is_matter and self.receive_callback_zigbee:
+        elif service is not None and not is_matter and self.receive_callback_zigbee:
             service, service_data = handle_zigbee_service(device, service, value)
             self.receive_callback_zigbee(device, service, service_data)
 
