@@ -7,6 +7,7 @@ lock = asyncio.Lock()
 
 
 async def ws_event_callback(event):
+    # print("ws event1", event)
     if event and "event" in event:
         try:
             event_data = event["event"]["data"]
@@ -19,6 +20,7 @@ async def ws_event_callback(event):
             return
 
         changed_states = compare_states(event_data["old_state"], event_data["new_state"])
+        # print("ws event2", event_data)
         logger.info(f"📨 WS Event state changed: {entity_id} - {changed_states}")
         send = []
         for key, value in changed_states.items():
@@ -31,6 +33,8 @@ async def ws_event_callback(event):
 
         for s in send:
             udp_send(s)
+
+
         # print("send 2 UDP", send)
         # send to udp
         # if event_data.get("entity_id") == entity_id:

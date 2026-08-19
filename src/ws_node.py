@@ -92,7 +92,7 @@ class WebSocketClient:
                         if self.event_callback:
                             await self.event_callback(event)
                     except Exception as e:
-                        logger.error(f"WS Error in event handling: {e}")
+                        logger.error(f"WS Error in event handling: {e} {event}")
             except (ConnectionClosedError, ConnectionClosedOK) as e:
                 if self.running:
                     logger.warning(f"❌ Connection closed: {e}. Reconnecting...")
